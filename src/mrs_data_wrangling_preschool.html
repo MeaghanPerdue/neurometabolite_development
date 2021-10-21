@@ -170,11 +170,7 @@ pre code {
 
 <div id="organize-data-for-mrs-project" class="section level2">
 <h2>Organize data for MRS project</h2>
-<p>First, set working directory and load reticulate</p>
-<pre class="r"><code>setwd(&quot;/Users/meaghan/OneDrive_UCal/Preschool_data/MRS&quot;)
-
-library(reticulate)</code></pre>
-<p>Next, import data from old tracking sheet and reduce to kids with MRS &amp; relevant columns</p>
+<p>Import data from old tracking sheet and reduce to kids with MRS &amp; relevant columns</p>
 <pre class="python"><code>import numpy as np
 import pandas as pd 
 
@@ -189,7 +185,7 @@ mrs = df.loc[df[&quot;spec&quot;] == &#39;1&#39;, [&#39;subj_id&#39;, &#39;spec_
 df2 = df2.rename(columns={&quot;meta_subj_id&quot;: &quot;subj_id&quot;, &quot;mri_sequence___1&quot;: &quot;dti_b750&quot;, &quot;mri_sequence___2&quot;: &quot;t1&quot;, &quot;mri_sequence___3&quot;: &quot;t2_star&quot;, &quot;mri_sequence___4&quot;: &quot;asl&quot;, &quot;mri_sequence___5&quot;: &quot;fmri&quot;, &quot;mri_sequence___6&quot;: &quot;t2_anat&quot;, &quot;mri_sequence___7&quot;: &quot;ihmt&quot;, &quot;mri_sequence___8&quot;: &quot;spec&quot;, &quot;mri_sequence___9&quot;: &quot;dti_b2000&quot;, &quot;mri_sequence___10&quot;: &quot;wm_dti_b900_adol&quot;, &quot;mri_sequence___11&quot;: &quot;wm_dti_b2000_adol&quot;, &quot;mri_te_value_750&quot;: &quot;dti750_te&quot;, &quot;mri_t1_dq&quot;:&quot;t1_quality&quot;, &quot;mri_spec_id&quot;: &quot;spec_id&quot;, &quot;mri_spec_location&quot;: &quot;spec_location&quot;})
 
 mrs2 = df2.loc[df2[&quot;spec&quot;] == 1, [&#39;subj_id&#39;, &#39;spec_id&#39;, &#39;mri_age_y&#39;, &#39;spec&#39;, &#39;spec_location&#39;, &#39;t1&#39;, &#39;t1_quality&#39;, &#39;dti_b750&#39;, &#39;dti_b2000&#39;, &#39;dti750_te&#39;]]</code></pre>
-<p>Merge mrs and mrs2 dataframes, clean up, and create new separate columns indicating yes/no for acquisition of ACG and LAG voxels, count how many subjects have MRS data for each voxel</p>
+<p>Merge mrs and mrs2 dataframes, clean up, and create new separate columns indicating yes/no for acquisition of ACG and LAG voxels, count total data sets per voxel and how many subjects have MRS data for each voxel</p>
 <pre class="python"><code>mrs_all = mrs.append(mrs2)
 
 mrs_all = mrs_all.replace({&quot;ACG&quot;: 1, &quot;LAG&quot;: 2, &quot;LAG, ACG&quot;: 3, &quot;LAG and ACG&quot;: 3})
@@ -213,8 +209,33 @@ mrs_all[&#39;spec_acg&#39;].value_counts()</code></pre>
 <pre><code>## 1.0    327
 ## 0.0    131
 ## Name: spec_lag, dtype: int64</code></pre>
+<pre class="python"><code>mrs_all.groupby(&#39;spec_acg&#39;)[&#39;subj_id&#39;].nunique()</code></pre>
+<pre><code>## spec_acg
+## 0.0    111
+## 1.0    130
+## Name: subj_id, dtype: int64</code></pre>
+<pre class="python"><code>mrs_all.groupby(&#39;spec_lag&#39;)[&#39;subj_id&#39;].nunique()</code></pre>
+<pre><code>## spec_lag
+## 0.0    130
+## 1.0    111
+## Name: subj_id, dtype: int64</code></pre>
 <p>Save mrs_all dataframe to .csv</p>
-<pre class="python"><code>mrs_all.to_csv(&#39;mrs_data_summary_Oct2021.csv&#39;, index=False)</code></pre>
+<pre class="python"><code>mrs_all.to_csv(&quot;/Users/meaghan/OneDrive_UCal/Preschool_data/MRS/data/mrs_data_summary_Oct2021.csv&quot;, index=False)</code></pre>
+<p>Create separate data frames for ACG and LAG data and write to .csv</p>
+<pre class="python"><code>mrs_acg = mrs_all.query(&#39;spec_acg == 1&#39;)
+mrs_acg.to_csv(&quot;/Users/meaghan/OneDrive_UCal/Preschool_data/MRS/data/mrs_data_ACG_Oct2021.csv&quot;, index=False)
+
+mrs_lag = mrs_all.query(&#39;spec_lag == 1&#39;)
+mrs_lag.to_csv(&quot;/Users/meaghan/OneDrive_UCal/Preschool_data/MRS/data/mrs_data_LAG_Oct2021.csv&quot;, index=False)</code></pre>
+<p>Age range per voxel location</p>
+<pre class="python"><code>mrs_acg[&#39;mri_age_y&#39;].min()</code></pre>
+<pre><code>## 2.3381</code></pre>
+<pre class="python"><code>mrs_acg[&#39;mri_age_y&#39;].max()</code></pre>
+<pre><code>## 8.0246</code></pre>
+<pre class="python"><code>mrs_lag[&#39;mri_age_y&#39;].min()</code></pre>
+<pre><code>## 2.4887</code></pre>
+<pre class="python"><code>mrs_lag[&#39;mri_age_y&#39;].max()</code></pre>
+<pre><code>## 10.44</code></pre>
 </div>
 
 

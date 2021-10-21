@@ -1,23 +1,18 @@
 ---
 title: "preschool_data_wrangling"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(root.dir = '/Users/meaghan/OneDrive_UCal/Preschool_data/MRS')
+library(reticulate)
 ```
 
 ## Organize data for MRS project
 
-First, set working directory and load reticulate 
-```{r}
-setwd("/Users/meaghan/OneDrive_UCal/Preschool_data/MRS")
-
-library(reticulate)
-
-```
-
-Next, import data from old tracking sheet and reduce to kids with MRS & relevant columns
+Import data from old tracking sheet and reduce to kids with MRS & relevant columns
 ```{python}
 import numpy as np
 import pandas as pd 
@@ -33,8 +28,6 @@ Recode t1_quality from text to numeric (1=good, 2=medium, 3=bad)
 mrs = mrs.replace({"good": 1, "medium": 2, "bad":3, "good ":1, "medium ":2, "bad ":3})
 ```
 
-
-
 Then import data from REDCap export (2019-present), rename variables to match mrs dataframe and reduce to kids with MRS & relevant columns
 ```{python}
 df2 = pd.read_csv("/Users/meaghan/OneDrive_UCal/Preschool_data/redcap_report_mri_data_oct1921.csv")
@@ -45,7 +38,7 @@ mrs2 = df2.loc[df2["spec"] == 1, ['subj_id', 'spec_id', 'mri_age_y', 'spec', 'sp
 
 ```
 
-Merge mrs and mrs2 dataframes, clean up, and create new separate columns indicating yes/no for acquisition of ACG and LAG voxels, count how many subjects have MRS data for each voxel
+Merge mrs and mrs2 dataframes, clean up, and create new separate columns indicating yes/no for acquisition of ACG and LAG voxels, count total data sets per voxel and how many subjects have MRS data for each voxel
 ```{python}
 mrs_all = mrs.append(mrs2)
 
@@ -61,9 +54,33 @@ mrs_all.loc[(mrs_all['spec_location'] == 1), 'spec_lag'] = 0
 
 mrs_all['spec_acg'].value_counts()
 mrs_all['spec_lag'].value_counts()
+
+mrs_all.groupby('spec_acg')['subj_id'].nunique()
+mrs_all.groupby('spec_lag')['subj_id'].nunique()
 ```
 Save mrs_all dataframe to .csv
 ```{python}
-mrs_all.to_csv('mrs_data_summary_Oct2021.csv', index=False)
+mrs_all.to_csv("/Users/meaghan/OneDrive_UCal/Preschool_data/MRS/data/mrs_data_summary_Oct2021.csv", index=False)
 ```
+
+
+Create separate data frames for ACG and LAG data and write to .csv
+```{python}
+mrs_acg = mrs_all.query('spec_acg == 1')
+mrs_acg.to_csv("/Users/meaghan/OneDrive_UCal/Preschool_data/MRS/data/mrs_data_ACG_Oct2021.csv", index=False)
+
+mrs_lag = mrs_all.query('spec_lag == 1')
+mrs_lag.to_csv("/Users/meaghan/OneDrive_UCal/Preschool_data/MRS/data/mrs_data_LAG_Oct2021.csv", index=False)
+```
+
+Age range per voxel location
+```{python}
+mrs_acg['mri_age_y'].min()
+mrs_acg['mri_age_y'].max()
+
+mrs_lag['mri_age_y'].min()
+mrs_lag['mri_age_y'].max()
+
+```
+
 
