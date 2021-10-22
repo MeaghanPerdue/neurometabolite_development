@@ -19,23 +19,28 @@ import pandas as pd
 
 df = pd.read_csv("/Users/meaghan/OneDrive_UCal/Preschool_data/preschool_mri_data_sheet.csv")
 
-mrs = df.loc[df["spec"] == '1', ['subj_id', 'spec_id', 'hand', 'female', 'mri_age_y', 'demographics', 'pp_data', 'sn_data', 'spec', 'spec_location', 't1', 't1_quality', 'dti_b750', 'dti_b2000', 'dti750_te', 'notes']]
+mrs = df.loc[df["spec"] == '1', ['study_code','subj_id', 'spec_id', 'date_scan', 'hand', 'female', 'mri_age_y', 'demographics', 'pp_data', 'sn_data', 'spec', 'spec_location', 't1', 't1_quality', 'dti_b750', 'dti_b2000', 'dti750_te', 'notes']]
 
 ```
 
-Recode t1_quality from text to numeric (1=good, 2=medium, 3=bad)
+Recode t1_quality from text to numeric (1=good, 2=medium, 3=bad) & convert date_scan to datetime format
 ```{python}
 mrs = mrs.replace({"good": 1, "medium": 2, "bad":3, "good ":1, "medium ":2, "bad ":3})
+
+mrs['date_scan_dt'] = pd.to_datetime(mrs['date_scan'])
+mrs['date_scan'] = mrs['date_scan_dt'].dt.date
 ```
 
-Then import data from REDCap export (2019-present), rename variables to match mrs dataframe and reduce to kids with MRS & relevant columns
+Then import data from REDCap export (2019-present), rename variables to match mrs dataframe and reduce to kids with MRS & relevant columns & convert date format to datetime format
 ```{python}
 df2 = pd.read_csv("/Users/meaghan/OneDrive_UCal/Preschool_data/redcap_report_mri_data_oct1921.csv")
 
-df2 = df2.rename(columns={"meta_subj_id": "subj_id", "mri_sequence___1": "dti_b750", "mri_sequence___2": "t1", "mri_sequence___3": "t2_star", "mri_sequence___4": "asl", "mri_sequence___5": "fmri", "mri_sequence___6": "t2_anat", "mri_sequence___7": "ihmt", "mri_sequence___8": "spec", "mri_sequence___9": "dti_b2000", "mri_sequence___10": "wm_dti_b900_adol", "mri_sequence___11": "wm_dti_b2000_adol", "mri_te_value_750": "dti750_te", "mri_t1_dq":"t1_quality", "mri_spec_id": "spec_id", "mri_spec_location": "spec_location"})
+df2 = df2.rename(columns={"meta_subj_id": "subj_id", "mri_studycode": "study_code", "mri_date": "date_scan", "mri_sequence___1": "dti_b750", "mri_sequence___2": "t1", "mri_sequence___3": "t2_star", "mri_sequence___4": "asl", "mri_sequence___5": "fmri", "mri_sequence___6": "t2_anat", "mri_sequence___7": "ihmt", "mri_sequence___8": "spec", "mri_sequence___9": "dti_b2000", "mri_sequence___10": "wm_dti_b900_adol", "mri_sequence___11": "wm_dti_b2000_adol", "mri_te_value_750": "dti750_te", "mri_t1_dq":"t1_quality", "mri_spec_id": "spec_id", "mri_spec_location": "spec_location"})
 
-mrs2 = df2.loc[df2["spec"] == 1, ['subj_id', 'spec_id', 'mri_age_y', 'spec', 'spec_location', 't1', 't1_quality', 'dti_b750', 'dti_b2000', 'dti750_te']]
+mrs2 = df2.loc[df2["spec"] == 1, ['study_code', 'subj_id', 'spec_id', 'date_scan', 'mri_age_y', 'spec', 'spec_location', 't1', 't1_quality', 'dti_b750', 'dti_b2000', 'dti750_te']]
 
+mrs2['date_scan_dt'] = pd.to_datetime(mrs2['date_scan'], yearfirst=True)
+mrs2['date_scan'] = mrs2['date_scan_dt'].dt.date
 ```
 
 Merge mrs and mrs2 dataframes, clean up, and create new separate columns indicating yes/no for acquisition of ACG and LAG voxels, count total data sets per voxel and how many subjects have MRS data for each voxel
