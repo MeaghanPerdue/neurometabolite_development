@@ -113,7 +113,17 @@
 \subsection{Organize data for MRS
 project}\label{organize-data-for-mrs-project}}
 
-Import data from old tracking sheet and reduce to kids with MRS \&
+First, set working directory and load reticulate
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{setwd}\NormalTok{(}\StringTok{"/Users/meaghan/OneDrive\_UCal/Preschool\_data/MRS"}\NormalTok{)}
+
+\FunctionTok{library}\NormalTok{(reticulate)}
+\end{Highlighting}
+\end{Shaded}
+
+Next, import data from old tracking sheet and reduce to kids with MRS \&
 relevant columns
 
 \begin{Shaded}
@@ -149,8 +159,8 @@ match mrs dataframe and reduce to kids with MRS \& relevant columns
 \end{Shaded}
 
 Merge mrs and mrs2 dataframes, clean up, and create new separate columns
-indicating yes/no for acquisition of ACG and LAG voxels, count total
-data sets per voxel and how many subjects have MRS data for each voxel
+indicating yes/no for acquisition of ACG and LAG voxels, count how many
+subjects have MRS data for each voxel
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -199,92 +209,13 @@ data sets per voxel and how many subjects have MRS data for each voxel
 ## Name: spec_lag, dtype: int64
 \end{verbatim}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{mrs\_all.groupby(}\StringTok{\textquotesingle{}spec\_acg\textquotesingle{}}\NormalTok{)[}\StringTok{\textquotesingle{}subj\_id\textquotesingle{}}\NormalTok{].nunique()}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-## spec_acg
-## 0.0    111
-## 1.0    130
-## Name: subj_id, dtype: int64
-\end{verbatim}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{mrs\_all.groupby(}\StringTok{\textquotesingle{}spec\_lag\textquotesingle{}}\NormalTok{)[}\StringTok{\textquotesingle{}subj\_id\textquotesingle{}}\NormalTok{].nunique()}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-## spec_lag
-## 0.0    130
-## 1.0    111
-## Name: subj_id, dtype: int64
-\end{verbatim}
-
 Save mrs\_all dataframe to .csv
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{mrs\_all.to\_csv(}\StringTok{"/Users/meaghan/OneDrive\_UCal/Preschool\_data/MRS/data/mrs\_data\_summary\_Oct2021.csv"}\NormalTok{, index}\OperatorTok{=}\VariableTok{False}\NormalTok{)}
+\NormalTok{mrs\_all.to\_csv(}\StringTok{\textquotesingle{}mrs\_data\_summary\_Oct2021.csv\textquotesingle{}}\NormalTok{, index}\OperatorTok{=}\VariableTok{False}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
-Create separate data frames for ACG and LAG data and write to .csv
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{mrs\_acg }\OperatorTok{=}\NormalTok{ mrs\_all.query(}\StringTok{\textquotesingle{}spec\_acg == 1\textquotesingle{}}\NormalTok{)}
-\NormalTok{mrs\_acg.to\_csv(}\StringTok{"/Users/meaghan/OneDrive\_UCal/Preschool\_data/MRS/data/mrs\_data\_ACG\_Oct2021.csv"}\NormalTok{, index}\OperatorTok{=}\VariableTok{False}\NormalTok{)}
-
-\NormalTok{mrs\_lag }\OperatorTok{=}\NormalTok{ mrs\_all.query(}\StringTok{\textquotesingle{}spec\_lag == 1\textquotesingle{}}\NormalTok{)}
-\NormalTok{mrs\_lag.to\_csv(}\StringTok{"/Users/meaghan/OneDrive\_UCal/Preschool\_data/MRS/data/mrs\_data\_LAG\_Oct2021.csv"}\NormalTok{, index}\OperatorTok{=}\VariableTok{False}\NormalTok{)}
-\end{Highlighting}
-\end{Shaded}
-
-Age range per voxel location
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{mrs\_acg[}\StringTok{\textquotesingle{}mri\_age\_y\textquotesingle{}}\NormalTok{].}\BuiltInTok{min}\NormalTok{()}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-## 2.3381
-\end{verbatim}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{mrs\_acg[}\StringTok{\textquotesingle{}mri\_age\_y\textquotesingle{}}\NormalTok{].}\BuiltInTok{max}\NormalTok{()}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-## 8.0246
-\end{verbatim}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{mrs\_lag[}\StringTok{\textquotesingle{}mri\_age\_y\textquotesingle{}}\NormalTok{].}\BuiltInTok{min}\NormalTok{()}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-## 2.4887
-\end{verbatim}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{mrs\_lag[}\StringTok{\textquotesingle{}mri\_age\_y\textquotesingle{}}\NormalTok{].}\BuiltInTok{max}\NormalTok{()}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-## 10.44
-\end{verbatim}
 
 \end{document}
