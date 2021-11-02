@@ -105,7 +105,7 @@ make sure mrs_lag is pulled from code as above (reading in from .csv gets the da
 concatenate columns to produce folder name where p file is located & write to a .txt file
 ```{python}
 
-mrs_lag['pfile_prefix'] = "SPECT_EXAM"
+mrs_lag['pfile_prefix'] = "SPECT-EXAM"
 mrs_lag['sep'] = "-"
 
 mrs_lag['pfile_path'] = mrs_lag['pfile_prefix'].map(str) + mrs_lag['spec_id'].astype(str).str.split('.', expand = True)[0] + mrs_lag['sep'].map(str) + mrs_lag['date_scan_dt'].astype(str).str.split(' ', expand = True)[0]
