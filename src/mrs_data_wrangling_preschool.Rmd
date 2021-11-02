@@ -99,3 +99,17 @@ mrs_all.groupby('after_jul092019')['subj_id'].nunique()
 mrs_all.to_csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/mrs_data_summary_Oct2021.csv", index=False)
 ```
 
+Create list of subject folders for downloading pfiles
+first create a column of the folder name prefix and a separator
+make sure mrs_lag is pulled from code as above (reading in from .csv gets the date time format wrong for the string we need)
+concatenate columns to produce folder name where p file is located & write to a .txt file
+```{python}
+
+mrs_lag['pfile_prefix'] = "SPECT_EX"
+mrs_lag['sep'] = "-"
+
+mrs_lag['pfile_path'] = mrs_lag['pfile_prefix'].map(str) + mrs_lag['spec_id'].astype(str).str.split('.', expand = True)[0] + mrs_lag['sep'].map(str) + mrs_lag['date_scan_dt'].astype(str).str.split(' ', expand = True)[0]
+
+mrs_lag['pfile_path'].to_csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/mrs_lag_pfile_dir.txt", sep ='\t', header=False, index=False)
+```
+
