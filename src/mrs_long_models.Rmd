@@ -1,0 +1,113 @@
+---
+title: "MRS Longitudinal Modelling"
+author: "Meaghan Perdue"
+date: "12/14/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(root.dir = '/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/')
+library(dplyr)
+library(lme4)
+library(ggplot2)
+library(ggpubr)
+library(EnvStats)
+setwd('/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data')
+```
+
+## Organize data
+
+Merge output data from multiple batches, select metabolite columns, add participant info and other data
+
+```{r}
+acg_batch1 <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/ACG_LCM_CorrectedTable_12-14-2021-16-15.csv")
+
+acg_batch2 <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/ACG_LCM_CorrectedTable_12-14-2021-16-21.csv")
+
+acg_LCM_corr <- bind_rows(acg_batch1, acg_batch2)
+anyDuplicated(acg_LCM_corr$File_ID) #check for duplicated values
+acg_LCM_corr<-unique(acg_LCM_corr) #remove duplicate rows
+acg_LCM_corr["4", "Cho_GPC_PCh_conc_molar"]<-NA #Cho conc invalid for PS10008_PS14_046_2386 due to spike in spectrum
+acg_LCM_corr["4", "Cho_GPC_PCh_conc_molal"]<-NA #Cho conc invalid for PS10008_PS14_046_2386 due to spike in spectrum
+
+write.csv(acg_LCM_corr, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/ACG_LCM_CorrectedTable_12-14-2021_all.csv", row.names = FALSE)
+
+acg_molal <- acg_LCM_corr %>%
+  dplyr::select(File_ID, fGM, fWM, fCSF, NAA_conc_molal, Cre_PCr_conc_molal, Cho_GPC_PCh_conc_molal, Ins_conc_molal, Glu_conc_molal, Glu_Gln_conc_molal)
+
+acg_demo <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_analysis_subs.csv")
+
+acg_dat <- left_join(acg_demo, acg_molal, by = "File_ID")
+write.csv(acg_dat, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_n113.csv", row.names = FALSE)
+
+lag_batch1 <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/LAG_LCM_CorrectedTable_12-13-2021-15-18.csv")
+
+lag_batch2 <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/LAG_LCM_CorrectedTable_12-14-2021-11-41.csv")
+
+lag_batch3 <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/LAG_LCM_CorrectedTable_12-14-2021-12-18.csv")
+
+lag_LCM_corr <- bind_rows(lag_batch1, lag_batch2, lag_batch3)
+write.csv(lag_LCM_corr, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/LAG_LCM_CorrectedTable_12-14-2021_all.csv", row.names = FALSE)
+
+lag_molal <- lag_LCM_corr %>%
+  dplyr::select(File_ID, fGM, fWM, fCSF, NAA_conc_molal, Cre_PCr_conc_molal, Cho_GPC_PCh_conc_molal, Ins_conc_molal, Glu_conc_molal, Glu_Gln_conc_molal)
+
+lag_demo <- read.csv
+
+```
+##Check data distribution & outliers
+Create plots to check data distribution and identify outliers
+```{r}
+plot_age <- ggplot(acg_dat, aes(mri_age_y))
+plot_age + geom_density()
+#age skewed
+
+plot_naa <- ggplot(acg_dat, aes(NAA_conc_molal))
+plot_naa + geom_density()
+plot_naa + geom_boxplot()
+rosnerTest(acg_dat$NAA_conc_molal, k = 4)
+
+plot_cre <- ggplot(acg_dat, aes(Cre_PCr_conc_molal))
+plot_cre + geom_density()
+plot_cre + geom_boxplot()
+rosnerTest(acg_dat$Cre_PCr_conc_molal, k = 5)
+
+plot_cho <- ggplot(acg_dat, aes(Cho_GPC_PCh_conc_molal))
+plot_cho + geom_density()
+plot_cho + geom_boxplot()
+rosnerTest(acg_dat$Cho_GPC_PCh_conc_molal, k = 4)
+
+plot_ins <- ggplot(acg_dat, aes(Ins_conc_molal))
+plot_ins + geom_density()
+shapiro.test(acg_dat$Ins_conc_molal) #not normal
+plot_ins + geom_boxplot()
+rosnerTest(acg_dat$Ins_conc_molal, k = 3) #outlier value 1.471244, observation 84 (PS18_013) - spectrum showed issue, exclude from analysis 
+acg_dat["84", "Ins_conc_molal"] <- NA #replace outlier value with NA to exclude from analysis
+
+plot_glx <- ggplot(acg_dat, aes(Glu_Gln_conc_molal))
+plot_glx + geom_density()
+plot_glx + geom_boxplot()
+rosnerTest(acg_dat$Glu_Gln_conc_molal, k = 1)
+
+
+```
+
+
+## LME modelling ACG
+run mixed-effects models for ACG with participant as random effect, age & sex as fixed effects
+
+```{r}
+
+```
+
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
