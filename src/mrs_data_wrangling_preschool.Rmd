@@ -88,6 +88,14 @@ mrs_lag['mri_age_y'].max()
 
 ```
 
+Count number of scans per participant per voxel & write to df
+```{python}
+mrs_lag_ses_counts=mrs_lag.value_counts(subset='subj_id').reset_index(name='counts')
+mrs_lag_ses_counts.to_csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/mrs_lag_ses_counts.csv", index=False)
+mrs_acg_ses_counts=mrs_acg.value_counts(subset='subj_id').reset_index(name='counts')
+mrs_acg_ses_counts.to_csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/mrs_acg_ses_counts.csv", index=False)
+```
+
 Create variable to track data collected after ISMRM abstract and check count
 ```{python}
 mrs_all.loc[(mrs_all['date_scan_dt'] > '2019-07-09'), 'after_jul092019'] = 1
@@ -110,9 +118,21 @@ mrs_lag['sep'] = "-"
 
 mrs_lag['pfile_path'] = mrs_lag['pfile_prefix'].map(str) + mrs_lag['spec_id'].astype(str).str.split('.', expand = True)[0] + mrs_lag['sep'].map(str) + mrs_lag['date_scan_dt'].astype(str).str.split(' ', expand = True)[0]
 
+mrs_lag.to_csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/mrs_lag_withpaths.csv", index=False)
+
 pfile_path_lag=mrs_lag['pfile_path']
 pfile_path_lag=pfile_path_lag[~pfile_path_lag.str.contains("nan")]
 
 pfile_path_lag.to_csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/mrs_lag_pfile_dir.txt", sep ='\t', header=False, index=False)
+
+
+mrs_acg = pd.read_csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/mrs_data_ACG_Oct2021.csv")
+
+mrs_acg['pfile_prefix'] = "SPECT-EXAM"
+mrs_acg['sep'] = "-"
+
+mrs_acg['pfile_path'] = mrs_acg['pfile_prefix'].map(str) + mrs_acg['spec_id'].astype(str).str.split('.', expand = True)[0] + mrs_acg['sep'].map(str) + mrs_acg['date_scan_dt'].astype(str).str.split(' ', expand = True)[0]
+
+mrs_acg.to_csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/mrs_data_ACG_Oct2021.csv", index=False)
 ```
 
