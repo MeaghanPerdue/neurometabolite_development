@@ -9,9 +9,11 @@ output: html_document
 knitr::opts_chunk$set(root.dir = '/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/')
 library(dplyr)
 library(lme4)
+library(lmerTest)
 library(ggplot2)
 library(ggpubr)
 library(EnvStats)
+library(psych)
 setwd('/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data')
 ```
 
@@ -52,11 +54,20 @@ write.csv(lag_LCM_corr, "/Users/meaghan/OneDrive - University of Calgary/Prescho
 lag_molal <- lag_LCM_corr %>%
   dplyr::select(File_ID, fGM, fWM, fCSF, NAA_conc_molal, Cre_PCr_conc_molal, Cho_GPC_PCh_conc_molal, Ins_conc_molal, Glu_conc_molal, Glu_Gln_conc_molal)
 
-lag_demo <- read.csv
+lag_demo <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_analysis_subs.csv")
+
+lag_dat <- left_join(lag_demo, lag_molal, by = "File_ID")
+lag_dat$subj_id<-as.character(lag_dat$subj_id) #make subj_id character type
+
+write.csv(lag_dat, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_n321.csv", row.names = FALSE)
+
+
 
 ```
 ##Check data distribution & outliers
 Create plots to check data distribution and identify outliers
+
+ACG
 ```{r}
 plot_age <- ggplot(acg_dat, aes(mri_age_y))
 plot_age + geom_density()
@@ -89,25 +100,455 @@ plot_glx + geom_density()
 plot_glx + geom_boxplot()
 rosnerTest(acg_dat$Glu_Gln_conc_molal, k = 1)
 
+write.csv(acg_dat, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n113.csv", row.names = FALSE)
+```
+LAG
+```{r}
+plot_age <- ggplot(lag_dat, aes(mri_age_y))
+plot_age + geom_density()
+#age skewed
 
+plot_naa <- ggplot(lag_dat, aes(NAA_conc_molal))
+plot_naa + geom_density()
+plot_naa + geom_boxplot()
+rosnerTest(lag_dat$NAA_conc_molal, k = 10) #outliers val. 19.207, obs. 296 & Val. 10.148, obs. 306 - some issues in spectra, exclude from analysis for NAA
+lag_dat["296", "NAA_conc_molal"]<- NA
+lag_dat["306", "NAA_conc_molal"]<- NA
+
+plot_cre <- ggplot(lag_dat, aes(Cre_PCr_conc_molal))
+plot_cre + geom_density()
+plot_cre + geom_boxplot()
+rosnerTest(lag_dat$Cre_PCr_conc_molal, k = 10) #outliers val. 14.829, obs. 241 (PS17_047) - structure in resid. & val. 14.09, obs. 178 (PS17_045, spectrum looked fine), excluding only PS17_047 for now
+lag_dat["241", "Cre_PCr_conc_molal"]<-NA  #replace outlier value with NA to exclude from analysis
+
+plot_cho <- ggplot(lag_dat, aes(Cho_GPC_PCh_conc_molal))
+plot_cho + geom_density()
+plot_cho + geom_boxplot()
+rosnerTest(lag_dat$Cho_GPC_PCh_conc_molal, k = 8)
+
+plot_ins <- ggplot(lag_dat, aes(Ins_conc_molal))
+plot_ins + geom_density()
+plot_ins + geom_boxplot()
+rosnerTest(lag_dat$Ins_conc_molal, k = 8) #outliers: val. 14.077, obs. 241 (PS17_047) - structure in resid; val. 11.777, obs. 221 (PS16_014) - spectrum fine, keep for now; val. 1.542, obs. 197 (PS18_028) - noisy spectrum, spiky residuals, exclude; val. 2.04, obs. 62 (PS14_111) - spectrum fine, keep for now
+lag_dat["241", "Ins_conc_molal"] <- NA #replace outlier value with NA to exclude from analysis
+lag_dat["197", "Ins_conc_molal"] <- NA
+
+plot_glx <- ggplot(lag_dat, aes(Glu_Gln_conc_molal))
+plot_glx + geom_density()
+plot_glx + geom_boxplot()
+rosnerTest(lag_dat$Glu_Gln_conc_molal, k = 7)#outliers: val. 10.09, obs. 241 (PS17_047) - structure in resid; val. 31.2899, obs. 296 (PS21_030) - big spike in resid. around 2.1, exclude.
+lag_dat["241", "Glu_Gln_conc_molal"] <- NA
+lag_dat["296", "Glu_Gln_conc_molal"] <- NA
+
+#exclude PS17_047 from all analyses due to outlier status on multiple metabolites and issues in spectrum (noisy, structure in resid)
+lag_dat["241", "NAA_conc_molal"] <- NA
+lag_dat["241", "Cre_PCr_conc_molal"] <- NA
+lag_dat["241", "Cho_GPC_PCh_conc_molal"] <- NA
+
+write.csv(lag_dat, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n320.csv", row.names = FALSE)
+```
+
+##Descriptive stats
+```{r}
+#ACG - count individual subject N and N of females
+acg_sub_sex <- acg_dat %>%
+  dplyr::select(subj_id, female)
+acg_unique_subs<-unique(acg_sub_sex)
+length(acg_unique_subs$subj_id)
+sum(acg_unique_subs$female)
+
+describe(acg_dat)
+
+#LAG - count individual subject N and N of females
+lag_sub_sex <- lag_dat %>%
+  dplyr::select(subj_id, female)
+lag_unique_subs<-unique(lag_sub_sex)
+length(lag_unique_subs$subj_id)
+sum(lag_unique_subs$female)
+
+describe(lag_dat)
+
+#Calculate total Ns from both datasets combined
+all_dat<-bind_rows(acg_dat, lag_dat)
+length(unique(all_dat$File_ID))
+length(unique(all_dat$subj_id))
+all_sub_sex <- all_dat %>%
+  dplyr::select(subj_id, female)
+all_unique_subs<-unique(all_sub_sex)
+sum(all_unique_subs$female)
+
+describe(all_dat)
 ```
 
 
 ## LME modelling ACG
-run mixed-effects models for ACG with participant as random effect, age & sex as fixed effects
-
+run mixed-effects models for ACG with participant as random effect, age, sex and age x sex interaction as fixed effects
+NAA
+run on acg_data_molal_outliers_removed_n113.csv
 ```{r}
+acg_naa_age<- lmer(NAA_conc_molal ~ mri_age_y + (1 | subj_id), data=acg_dat, REML=FALSE)
+summary(acg_naa_age)
 
+acg_naa_age_sex<- lmer(NAA_conc_molal ~ mri_age_y + female + (1 | subj_id), data=acg_dat, REML=FALSE)
+summary(acg_naa_age_sex)
+
+anova(acg_naa_age,acg_naa_age_sex)
+
+acg_naa_ageXsex<- lmer(NAA_conc_molal ~ mri_age_y + female + mri_age_y:female + (1 | subj_id), data=acg_dat, REML=FALSE)
+summary(acg_naa_ageXsex)
+
+anova(acg_naa_age,acg_naa_ageXsex)
+
+#including sex in model does not significantly improve fit 
+```
+Cre
+```{r}
+acg_cre_age<- lmer(Cre_PCr_conc_molal ~ mri_age_y + (1 | subj_id), data=acg_dat, REML=FALSE)
+summary(acg_cre_age)
+
+acg_cre_age_sex<- lmer(Cre_PCr_conc_molal ~ mri_age_y + female + (1 | subj_id), data=acg_dat,  REML=FALSE)
+summary(acg_cre_age_sex)
+
+anova(acg_cre_age,acg_cre_age_sex)
+
+acg_cre_ageXsex<- lmer(Cre_PCr_conc_molal ~ mri_age_y + female + mri_age_y:female + (1 | subj_id), data=acg_dat, REML=FALSE)
+summary(acg_cre_ageXsex)
+
+anova(acg_cre_age,acg_cre_ageXsex)
+```
+Cho
+```{r}
+acg_cho_age<- lmer(Cho_GPC_PCh_conc_molal ~ mri_age_y + (1 | subj_id), data=acg_dat,  REML=FALSE)
+summary(acg_cho_age)
+
+acg_cho_age_sex<- lmer(Cho_GPC_PCh_conc_molal ~ mri_age_y + female + (1 | subj_id), data=acg_dat,  REML=FALSE)
+summary(acg_cho_age_sex)
+
+anova(acg_cho_age,acg_cho_age_sex)
+
+acg_cho_ageXsex<- lmer(Cho_GPC_PCh_conc_molal ~ mri_age_y + female + mri_age_y:female + (1 | subj_id), data=acg_dat,  REML=FALSE)
+summary(acg_cho_ageXsex)
+
+anova(acg_cho_age,acg_cho_ageXsex)
+
+#including sex in model does not significantly improve fit 
+```
+Ins
+```{r}
+acg_ins_age<- lmer(Ins_conc_molal ~ mri_age_y + (1 | subj_id), data=acg_dat, REML=FALSE)
+summary(acg_ins_age)
+
+acg_ins_age_sex<- lmer(Ins_conc_molal ~ mri_age_y + female + (1 | subj_id), data=acg_dat, REML=FALSE)
+summary(acg_ins_age_sex)
+
+anova(acg_ins_age,acg_ins_age_sex)
+
+acg_ins_ageXsex<- lmer(Ins_conc_molal ~ mri_age_y + female + mri_age_y:female + (1 | subj_id), data=acg_dat, REML=FALSE)
+summary(acg_ins_ageXsex)
+
+anova(acg_ins_age,acg_ins_ageXsex)
+```
+
+Glx
+```{r}
+acg_glx_age<- lmer(Glu_Gln_conc_molal ~ mri_age_y + (1 | subj_id), data=acg_dat, REML=FALSE)
+summary(acg_glx_age)
+
+acg_glx_age_sex<- lmer(Glu_Gln_conc_molal ~ mri_age_y + female + (1 | subj_id), data=acg_dat, REML=FALSE)
+summary(acg_glx_age_sex)
+
+anova(acg_glx_age,acg_glx_age_sex)
+
+acg_glx_ageXsex<- lmer(Glu_Gln_conc_molal ~ mri_age_y + female + mri_age_y:female + (1 | subj_id), data=acg_dat, REML=FALSE)
+summary(acg_glx_ageXsex)
+
+anova(acg_glx_age,acg_glx_ageXsex)
 ```
 
 
 
-## Including Plots
+## Plot results ACG
+Create scatter plot with regression line based on model predictions
+NAA
+```{r}
+#pull intercept and slope from model for regression line
+fixef.acg_naa<-fixef(acg_naa_age)
 
-You can also embed plots, for example:
+#plot
+plot_acg_naa_age<-ggplot(acg_dat, aes(x=mri_age_y, y=NAA_conc_molal,color=as.factor(female)))
+plot_acg_naa_age + 
+  geom_point() +
+  geom_line(aes(group = as.factor(subj_id))) +
+  labs(title = "Anterior Cingulate", x = "Age (years)", y = "tNAA (molal)") +
+  scale_color_discrete(name = "Sex", labels = c("Male", "Female")) +
+  geom_abline(aes(intercept = fixef.acg_naa[[1]], slope= fixef.acg_naa[[2]])) + 
+  theme_classic()
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_naa_age.png")
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+
+```
+Cho
+```{r}
+#pull intercept and slope from model for regression line
+fixef.acg_cho<-fixef(acg_cho_age)
+
+#plot
+plot_acg_cho_age<-ggplot(acg_dat, aes(x=mri_age_y, y=Cho_GPC_PCh_conc_molal,color=as.factor(female)))
+plot_acg_cho_age + 
+  geom_point() +
+  geom_line(aes(group = as.factor(subj_id))) +
+  labs(title = "Anterior Cingulate", x = "Age (years)", y = "tCho (molal)") +
+  scale_color_discrete(name = "Sex", labels = c("Male", "Female")) +
+  geom_abline(aes(intercept = fixef.acg_cho[[1]], slope= fixef.acg_cho[[2]])) + 
+  theme_classic()
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_cho_age.png")
+```
+Ins
+```{r}
+#pull intercept and slope from model for regression line
+fixef.acg_ins<-fixef(acg_ins_age)
+
+#plot
+plot_acg_ins_age<-ggplot(acg_dat, aes(x=mri_age_y, y=Ins_conc_molal,color=as.factor(female)))
+plot_acg_ins_age + 
+  geom_point() +
+  geom_line(aes(group = as.factor(subj_id))) +
+  labs(title = "Anterior Cingulate", x = "Age (years)", y = "Ins (molal)") +
+  scale_color_discrete(name = "Sex", labels = c("Male", "Female")) +
+  geom_abline(aes(intercept = fixef.acg_ins[[1]], slope= fixef.acg_ins[[2]])) + 
+  theme_classic()
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_ins_age.png")
+```
+## LME modelling LAG
+run mixed-effects models for lag with participant as random effect, age, sex and age x sex interaction as fixed effects
+NAA, substantial longitudinal data so we include random slope
+run on lag_data_molal_outliers_removed_n320.csv
+```{r}
+#basic model effect of age on intercept
+lag_naa_age<- lmer(NAA_conc_molal ~ mri_age_y + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_naa_age)
+
+lag_naa_age_sex<- lmer(NAA_conc_molal ~ mri_age_y + female + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_naa_age_sex)
+
+anova(lag_naa_age,lag_naa_age_sex)
+
+lag_naa_ageXsex<- lmer(NAA_conc_molal ~ mri_age_y + female + mri_age_y:female + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_naa_ageXsex)
+
+anova(lag_naa_age,lag_naa_ageXsex)
+
+#including sex in model does not significantly improve fit 
+
+#test quadratic effect of age
+#create age^2  variable
+lag_dat$mri_age_y2 <- (lag_dat$mri_age_y)^2
+
+lag_naa_age2<- lmer(NAA_conc_molal ~ mri_age_y + mri_age_y2 + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_naa_age2) #age^2 p=.0447
+
+anova(lag_naa_age, lag_naa_age2) #fit improved p=0.44
+
+```
+Cre
+```{r}
+lag_cre_age<- lmer(Cre_PCr_conc_molal ~ mri_age_y + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_cre_age)
+
+lag_cre_age_sex<- lmer(Cre_PCr_conc_molal ~ mri_age_y + female + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_cre_age_sex)
+
+anova(lag_cre_age,lag_cre_age_sex)
+
+lag_cre_ageXsex<- lmer(Cre_PCr_conc_molal ~ mri_age_y + female + mri_age_y:female + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_cre_ageXsex)
+
+anova(lag_cre_age,lag_cre_ageXsex)
+```
+Cho
+```{r}
+lag_cho_age<- lmer(Cho_GPC_PCh_conc_molal ~ mri_age_y + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_cho_age)
+
+lag_cho_age_sex<- lmer(Cho_GPC_PCh_conc_molal ~ mri_age_y + female + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_cho_age_sex)
+
+anova(lag_cho_age,lag_cho_age_sex)
+
+lag_cho_ageXsex<- lmer(Cho_GPC_PCh_conc_molal ~ mri_age_y + female + mri_age_y:female + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_cho_ageXsex)
+
+anova(lag_cho_age,lag_cho_ageXsex)
+
+#including sex in model does not significantly improve fit 
+```
+Ins
+```{r}
+lag_ins_age<- lmer(Ins_conc_molal ~ mri_age_y + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_ins_age)
+
+lag_ins_age_sex<- lmer(Ins_conc_molal ~ mri_age_y + female + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_ins_age_sex)
+
+anova(lag_ins_age,lag_ins_age_sex)
+
+lag_ins_ageXsex<- lmer(Ins_conc_molal ~ mri_age_y + female + mri_age_y:female + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_ins_ageXsex)
+
+anova(lag_ins_age,lag_ins_ageXsex)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Glx
+```{r}
+lag_glx_age<- lmer(Glu_Gln_conc_molal ~ mri_age_y + (1 | subj_id), data=lag_dat, REML=FALSE)
+isSingular(lag_glx_age) # TRUE: model is almost/near singular (parameters are on the boundary of the feasible parameter space: random effects variance = 0)
+summary(lag_glx_age)
+
+lag_glx_age_sex<- lmer(Glu_Gln_conc_molal ~ mri_age_y + female + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_glx_age_sex)
+
+anova(lag_glx_age,lag_glx_age_sex)
+
+lag_glx_ageXsex<- lmer(Glu_Gln_conc_molal ~ mri_age_y + female + mri_age_y:female + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_glx_ageXsex)
+
+anova(lag_glx_age,lag_glx_ageXsex)
+```
+## Plot results LAG
+Create scatter plot with regression line based on model predictions
+NAA
+```{r}
+#pull intercept and slope from model for regression line
+fixef.lag_naa<-fixef(lag_naa_age)
+
+#plot
+plot_lag_naa_age<-ggplot(lag_dat, aes(x=mri_age_y, y=NAA_conc_molal,color=as.factor(female)))
+plot_lag_naa_age + 
+  geom_point() +
+  geom_line(aes(group = as.factor(subj_id))) +
+  labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "tNAA (molal)") +
+  scale_color_discrete(name = "Sex", labels = c("Male", "Female")) +
+  geom_abline(aes(intercept = fixef.lag_naa[[1]], slope= fixef.lag_naa[[2]])) + 
+  theme_classic()
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_naa_age.png")
+```
+
+Cho
+```{r}
+#pull intercept and slope from model for regression line
+fixef.lag_cho<-fixef(lag_cho_age)
+
+#plot
+plot_lag_cho_age<-ggplot(lag_dat, aes(x=mri_age_y, y=Cho_GPC_PCh_conc_molal,color=as.factor(female)))
+plot_lag_cho_age + 
+  geom_point() +
+  geom_line(aes(group = as.factor(subj_id))) +
+  labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "tCho (molal)") +
+  scale_color_discrete(name = "Sex", labels = c("Male", "Female")) +
+  geom_abline(aes(intercept = fixef.lag_cho[[1]], slope= fixef.lag_cho[[2]])) + 
+  theme_classic()
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cho_age.png")
+
+```
+
+Glx
+```{r}
+#pull intercept and slope from model for regression line
+fixef.lag_glx<-fixef(lag_glx_age)
+
+#plot
+plot_lag_glx_age<-ggplot(lag_dat, aes(x=mri_age_y, y=Glu_Gln_conc_molal,color=as.factor(female)))
+plot_lag_glx_age + 
+  geom_point() +
+  geom_line(aes(group = as.factor(subj_id))) +
+  labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "Glx (molal)") +
+  scale_color_discrete(name = "Sex", labels = c("Male", "Female")) +
+  geom_abline(aes(intercept = fixef.lag_glx[[1]], slope= fixef.lag_glx[[2]])) + 
+  theme_classic()
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_glx_age.png")
+
+```
+
+##Correct for multiple comparisons
+Use FDR method (Benjamini & Hochberg) to correct for mutliple comparisons (5 metabolites x 2 voxels = 10 models)
+```{r}
+#list models (voxel/metabolite pair)
+models<- c("acg_naa", "acg_cr", "acg_cho", "acg_ins", "acg_glx", "lag_naa", "lag_cr", "lag_cho", "lag_ins", "lag_glx")
+
+#list p-values for each model, matching order of models
+p<-c(.0217, .307, .0258, .0494, .23, .00093, .115, .00229, .636, 0)
+
+fdr_table<-data.frame(models, p)
+
+fdr_table$p_fdr<-p.adjust(p, method = "fdr", n= length(p))
+fdr_table
+
+#run FDR without LAG-Glx in case it's invalid:
+p2<-p<-c(.0217, .307, .0258, .0494, .23, .00093, .115, .00229, .636)
+p.adjust(p2, method = "fdr", n= length(p2))
+
+```
+
+##Combine plots into 1 figure
+Simplify plots to legend & region don't repeat in each panel
+```{r}
+library(patchwork)
+p1_acg_naa_age<-plot_acg_naa_age + 
+  geom_point() +
+  geom_line(aes(group = as.factor(subj_id))) +
+  labs(title = "Anterior Cingulate", x = "Age (years)", y = "tNAA (molal)") +
+  scale_color_discrete(name = "Sex", labels = c("Male", "Female")) +
+  geom_abline(aes(intercept = fixef.acg_naa[[1]], slope= fixef.acg_naa[[2]])) + 
+  theme_classic() +
+  theme(plot.title= element_text(hjust = 0.5))
+
+p4_lag_naa_age<-plot_lag_naa_age + 
+  geom_point() +
+  geom_line(aes(group = as.factor(subj_id))) +
+  labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "tNAA (molal)") +
+  scale_color_discrete(guide="legend", name = "Sex", labels = c("Male", "Female")) +
+  theme_classic() +
+  #theme(legend.position = c(0.7, 0.95), legend.background = element_rect(fill='transparent')) +
+  geom_abline(aes(intercept = fixef.lag_naa[[1]], slope= fixef.lag_naa[[2]])) +
+  theme(plot.title= element_text(hjust = 0.5))
+
+
+p2_acg_cho_age<-plot_acg_cho_age + 
+  geom_point() +
+  geom_line(aes(group = as.factor(subj_id))) +
+  labs(x = "Age (years)", y = "tCho (molal)") +
+  scale_color_discrete(name = "Sex", labels = c("Male", "Female")) +
+  geom_abline(aes(intercept = fixef.acg_cho[[1]], slope= fixef.acg_cho[[2]])) + 
+  theme_classic() 
+  
+
+p5_lag_cho_age<-plot_lag_cho_age + 
+  geom_point() +
+  geom_line(aes(group = as.factor(subj_id))) +
+  labs(x = "Age (years)", y = "tCho (molal)") +
+  scale_color_discrete(name = "Sex", labels = c("Male", "Female")) +
+  geom_abline(aes(intercept = fixef.lag_cho[[1]], slope= fixef.lag_cho[[2]])) + 
+  theme_classic()
+
+p3_acg_ins_age<-plot_acg_ins_age + 
+  geom_point() +
+  geom_line(aes(group = as.factor(subj_id))) +
+  labs(x = "Age (years)", y = "Ins (molal)") +
+  scale_color_discrete(name = "Sex", labels = c("Male", "Female")) +
+  geom_abline(aes(intercept = fixef.acg_ins[[1]], slope= fixef.acg_ins[[2]])) + 
+  theme_classic()
+
+p6_lag_glx_age<-plot_lag_glx_age + 
+  geom_point() +
+  geom_line(aes(group = as.factor(subj_id))) +
+  labs(x = "Age (years)", y = "Glx (molal)") +
+  scale_color_discrete(name = "Sex", labels = c("Male", "Female")) +
+  geom_abline(aes(intercept = fixef.lag_glx[[1]], slope= fixef.lag_glx[[2]])) + 
+  theme_classic()
+
+results_fig<-p1_acg_naa_age + p4_lag_naa_age + p2_acg_cho_age + p5_lag_cho_age + p3_acg_ins_age + p6_lag_glx_age + plot_layout(nrow=3, guides ='collect')
+
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/results_fig_grid.png", results_fig, width = 2000, units = "px")
+
+```
+
