@@ -552,3 +552,75 @@ ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/resul
 
 ```
 
+
+##Additional models
+Next steps following OHBM abstract submission (Dec. 2021): test random slopes (LAG only) & add tissue fraction as fixed effect (ACG & LAG)
+
+```{r}
+#read in data
+lag_dat<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n320.csv")
+
+#basic age model NAA
+lag_naa_age<- lmer(NAA_conc_molal ~ mri_age_y + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_naa_age)
+
+#test random slope NAA
+lag_naa_age_randslope <- lmer(NAA_conc_molal ~ mri_age_y + (1 + mri_age_y | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_naa_age_randslope)
+#model failed to converge 
+
+#basic age model Cre
+lag_cre_age<- lmer(Cre_PCr_conc_molal ~ mri_age_y + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_cre_age)
+
+#test random slope Cre
+lag_cre_age_randslope<- lmer(Cre_PCr_conc_molal ~ mri_age_y + (1 + mri_age_y | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_cre_ag_randslope)
+#model failed to converge
+
+#basic age model Cho
+lag_cho_age<- lmer(Cho_GPC_PCh_conc_molal ~ mri_age_y + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_cho_age)
+
+#test random slope Cho
+lag_cho_age_randslope<- lmer(Cho_GPC_PCh_conc_molal ~ mri_age_y + (1 + mri_age_y | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_cho_age_randslope)
+
+#compare models
+anova(lag_cho_age, lag_cho_age_randslope) #fit did not improve with inclusion of random slopes
+
+#basic age model Ins
+lag_ins_age<- lmer(Ins_conc_molal ~ mri_age_y + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_ins_age)
+
+#test random slope Ins
+lag_ins_age_randslope<- lmer(Ins_conc_molal ~ mri_age_y + (1 + mri_age_y | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_ins_age_randslope)
+#boundary fit is singular
+
+anova(lag_ins_age, lag_ins_age_randslope) #fit did not improve with inclusion of random slopes
+
+lag_glx_age<- lmer(Glu_Gln_conc_molal ~ mri_age_y + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_glx_age)
+#boundary fit is singular
+
+lag_glx_age_randslope<- lmer(Glu_Gln_conc_molal ~ mri_age_y + (1 + mri_age_y | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_glx_age_randslope)
+#boundary fit is singular
+anova(lag_glx_age, lag_glx_age_randslope) #fit did not improve with inclusion of random slopes
+
+
+#Tissue fraction ACG
+acg_dat <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n113.csv")
+
+acg_naa_age_tissue <- lmer(NAA_conc_molal ~ mri_age_y + (1 | subj_id), data=acg_dat, REML=FALSE)
+summary(acg_naa_age_randslope)
+
+
+```
+
+
+
+
+
+
