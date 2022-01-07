@@ -265,6 +265,62 @@ summary(acg_glx_ageXsex)
 anova(acg_glx_age,acg_glx_ageXsex)
 ```
 
+## Plot results ACG
+Create scatter plot with regression line based on model predictions
+NAA
+```{r}
+acg_dat <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n113.csv")
+
+#pull intercept and slope from model for regression line
+fixef.acg_naa<-fixef(acg_naa_age)
+
+#plot
+plot_acg_naa_age<-ggplot(acg_dat, aes(x=mri_age_y, y=NAA_conc_molal,color=as.factor(female)))
+plot_acg_naa_age + 
+  geom_point() +
+  geom_line(aes(group = as.factor(subj_id))) +
+  labs(title = "Anterior Cingulate", x = "Age (years)", y = "tNAA (molal)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_abline(aes(intercept = fixef.acg_naa[[1]], slope= fixef.acg_naa[[2]])) + 
+  theme_classic()
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_naa_age_viridis.png")
+
+
+```
+Cho
+```{r}
+#pull intercept and slope from model for regression line
+fixef.acg_cho<-fixef(acg_cho_age)
+
+#plot
+plot_acg_cho_age<-ggplot(acg_dat, aes(x=mri_age_y, y=Cho_GPC_PCh_conc_molal,color=as.factor(female)))
+plot_acg_cho_age + 
+  geom_point() +
+  geom_line(aes(group = as.factor(subj_id))) +
+  labs(title = "Anterior Cingulate", x = "Age (years)", y = "tCho (molal)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_abline(aes(intercept = fixef.acg_cho[[1]], slope= fixef.acg_cho[[2]])) + 
+  theme_classic()
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_cho_age_viridis.png")
+```
+Ins
+```{r}
+#pull intercept and slope from model for regression line
+fixef.acg_ins<-fixef(acg_ins_age)
+
+#plot
+plot_acg_ins_age<-ggplot(acg_dat, aes(x=mri_age_y, y=Ins_conc_molal,color=as.factor(female)))
+plot_acg_ins_age + 
+  geom_point() +
+  geom_line(aes(group = as.factor(subj_id))) +
+  labs(title = "Anterior Cingulate", x = "Age (years)", y = "Ins (molal)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_abline(aes(intercept = fixef.acg_ins[[1]], slope= fixef.acg_ins[[2]])) + 
+  theme_classic()
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_ins_age_viridis.png")
+```
+
+
 ## LME modelling LAG
 run mixed-effects models for lag with participant as random effect, age, sex and age x sex interaction as fixed effects
 NAA, substantial longitudinal data so we include random slope
@@ -378,6 +434,125 @@ fdr_table
 #run FDR without LAG-Glx in case it's invalid:
 p2<-p<-c(.0217, .307, .0258, .0494, .23, .00093, .115, .00229, .636)
 p.adjust(p2, method = "fdr", n= length(p2))
+
+```
+## Plot results LAG
+Create scatter plot with regression line based on model predictions
+NAA
+```{r}
+lag_dat<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n320.csv")
+
+#pull intercept and slope from model for regression line
+fixef.lag_naa<-fixef(lag_naa_age)
+
+#plot
+plot_lag_naa_age<-ggplot(lag_dat, aes(x=mri_age_y, y=NAA_conc_molal,color=as.factor(female)))
+plot_lag_naa_age + 
+  geom_point() +
+  geom_line(aes(group = as.factor(subj_id))) +
+  labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "tNAA (molal)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_abline(aes(intercept = fixef.lag_naa[[1]], slope= fixef.lag_naa[[2]])) + 
+  theme_classic()
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_naa_age_viridis.png")
+```
+
+Cho
+```{r}
+#pull intercept and slope from model for regression line
+fixef.lag_cho<-fixef(lag_cho_age)
+
+#plot
+plot_lag_cho_age<-ggplot(lag_dat, aes(x=mri_age_y, y=Cho_GPC_PCh_conc_molal,color=as.factor(female)))
+plot_lag_cho_age + 
+  geom_point() +
+  geom_line(aes(group = as.factor(subj_id))) +
+  labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "tCho (molal)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_abline(aes(intercept = fixef.lag_cho[[1]], slope= fixef.lag_cho[[2]])) + 
+  theme_classic()
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cho_age_viridis.png")
+
+```
+
+Glx
+```{r}
+#pull intercept and slope from model for regression line
+fixef.lag_glx<-fixef(lag_glx_age)
+
+#plot
+plot_lag_glx_age<-ggplot(lag_dat, aes(x=mri_age_y, y=Glu_Gln_conc_molal,color=as.factor(female)))
+plot_lag_glx_age + 
+  geom_point() +
+  geom_line(aes(group = as.factor(subj_id))) +
+  labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "Glx (molal)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_abline(aes(intercept = fixef.lag_glx[[1]], slope= fixef.lag_glx[[2]])) + 
+  theme_classic()
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_glx_age_viridis.png")
+
+```
+
+##Combine results plots into 1 figure
+Simplify plots to legend & region don't repeat in each panel
+```{r}
+library(patchwork)
+p1_acg_naa_age<-plot_acg_naa_age + 
+  geom_point() +
+  geom_line(aes(group = as.factor(subj_id))) +
+  labs(title = "Anterior Cingulate", x = "Age (years)", y = "tNAA (molal)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_abline(aes(intercept = fixef.acg_naa[[1]], slope= fixef.acg_naa[[2]])) + 
+  theme_classic() +
+  theme(plot.title= element_text(hjust = 0.5))
+
+p4_lag_naa_age<-plot_lag_naa_age + 
+  geom_point() +
+  geom_line(aes(group = as.factor(subj_id))) +
+  labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "tNAA (molal)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  theme_classic() +
+  #theme(legend.position = c(0.7, 0.95), legend.background = element_rect(fill='transparent')) +
+  geom_abline(aes(intercept = fixef.lag_naa[[1]], slope= fixef.lag_naa[[2]])) +
+  theme(plot.title= element_text(hjust = 0.5))
+
+
+p2_acg_cho_age<-plot_acg_cho_age + 
+  geom_point() +
+  geom_line(aes(group = as.factor(subj_id))) +
+  labs(x = "Age (years)", y = "tCho (molal)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_abline(aes(intercept = fixef.acg_cho[[1]], slope= fixef.acg_cho[[2]])) + 
+  theme_classic() 
+  
+
+p5_lag_cho_age<-plot_lag_cho_age + 
+  geom_point() +
+  geom_line(aes(group = as.factor(subj_id))) +
+  labs(x = "Age (years)", y = "tCho (molal)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_abline(aes(intercept = fixef.lag_cho[[1]], slope= fixef.lag_cho[[2]])) + 
+  theme_classic()
+
+p3_acg_ins_age<-plot_acg_ins_age + 
+  geom_point() +
+  geom_line(aes(group = as.factor(subj_id))) +
+  labs(x = "Age (years)", y = "Ins (molal)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_abline(aes(intercept = fixef.acg_ins[[1]], slope= fixef.acg_ins[[2]])) + 
+  theme_classic()
+
+p6_lag_glx_age<-plot_lag_glx_age + 
+  geom_point() +
+  geom_line(aes(group = as.factor(subj_id))) +
+  labs(x = "Age (years)", y = "Glx (molal)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_abline(aes(intercept = fixef.lag_glx[[1]], slope= fixef.lag_glx[[2]])) + 
+  theme_classic()
+
+results_fig<-p1_acg_naa_age + p4_lag_naa_age + p2_acg_cho_age + p5_lag_cho_age + p3_acg_ins_age + p6_lag_glx_age + plot_layout(nrow=3, guides ='collect')
+
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/results_fig_grid_viridis.png", results_fig, width = 2000, units = "px")
 
 ```
 
