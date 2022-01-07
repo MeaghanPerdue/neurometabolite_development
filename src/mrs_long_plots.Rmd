@@ -11,9 +11,11 @@ library(tidyverse)
 library(ggplot2)
 library(ggpubr)
 library(patchwork)
+library(viridis)
 ```
 
 ## Plot participant ages/timepoints
+using viridis color package for colorblind accessibility
 ```{r}
 #read in data
 acg_dat <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n113.csv")
@@ -28,7 +30,7 @@ acg_age_ses1 <- acg_dat %>%
 #create subject ID variable by order of age at first MRI
 acg_age_ses1$id_by_age_ses1 <- seq.int(nrow(acg_age_ses1))
 
-#select only subj_id and acg_age_ses1 columns
+#select only subj_id and acg_age_ses1 columns to create index of subjects ordered by age of first scan
 acg_subj_id_age_index <- acg_age_ses1 %>%
   dplyr::select(subj_id, id_by_age_ses1)
 
@@ -41,10 +43,10 @@ plot_acg_sessions<-p1 +
   geom_point() +
   geom_line(aes(group = as.factor(id_by_age_ses1))) +
   labs(title = "Anterior Cingulate", x = "Age (years)", y = "Participant") +
-   scale_x_continuous(limits = c(1, 8), n.breaks = 7) +
-  scale_color_manual(values = c("blue", "red"),name = "Sex", labels = c("Male", "Female")) +
+  scale_x_continuous(limits = c(1, 8), n.breaks = 7) +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
   theme_classic() +
-  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), legend.position = "none")
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), legend.position = "right")
 plot_acg_sessions
 ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_timepoints.png")
 
@@ -57,7 +59,7 @@ lag_age_ses1 <- lag_dat %>%
 #create subject ID variable by order of age at first MRI
 lag_age_ses1$id_by_age_ses1 <- seq.int(nrow(lag_age_ses1))
 
-#select only subj_id and lag_age_ses1 columns
+#select only subj_id and lag_age_ses1 columns to create index of subjects ordered by age of first scan
 lag_subj_id_age_index <- lag_age_ses1 %>%
   dplyr::select(subj_id, id_by_age_ses1)
 
@@ -71,16 +73,19 @@ plot_lag_sessions<-p2 +
   geom_line(aes(group = as.factor(id_by_age_ses1))) +
   labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "Participant") +
   scale_x_continuous(limits = c(1, 12), n.breaks = 11) +
-  scale_color_manual(values = c("blue", "red"),name = "Sex", labels = c("Male", "Female")) +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
   theme_classic() +
-  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), legend.position = "none")
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), legend.position = "right")
 plot_lag_sessions
 ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_timepoints.png")
 
 #combine into a single figure
-session_fig<-plot_acg_sessions + plot_lag_sessions + plot_layout(nrow=1)
+session_fig<-plot_acg_sessions + plot_lag_sessions + plot_layout(nrow=1, guides ='collect')
 session_fig
 ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/session_timepoints_fig.png", height = 7, width = 14)
 
 ```
+
+
+
 
