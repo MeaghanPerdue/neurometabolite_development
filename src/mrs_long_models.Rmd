@@ -417,25 +417,6 @@ summary(lag_glx_ageXsex)
 anova(lag_glx_age,lag_glx_ageXsex)
 ```
 
-##Correct for multiple comparisons
-Use FDR method (Benjamini & Hochberg) to correct for mutliple comparisons (5 metabolites x 2 voxels = 10 models)
-```{r}
-#list models (voxel/metabolite pair)
-models<- c("acg_naa", "acg_cr", "acg_cho", "acg_ins", "acg_glx", "lag_naa", "lag_cr", "lag_cho", "lag_ins", "lag_glx")
-
-#list p-values for each model, matching order of models
-p<-c(.0217, .307, .0258, .0494, .23, .00093, .115, .00229, .636, 0)
-
-fdr_table<-data.frame(models, p)
-
-fdr_table$p_fdr<-p.adjust(p, method = "fdr", n= length(p))
-fdr_table
-
-#run FDR without LAG-Glx in case it's invalid:
-p2<-p<-c(.0217, .307, .0258, .0494, .23, .00093, .115, .00229, .636)
-p.adjust(p2, method = "fdr", n= length(p2))
-
-```
 ## Plot results LAG
 Create scatter plot with regression line based on model predictions
 NAA
@@ -556,9 +537,29 @@ ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/resul
 
 ```
 
+##Correct for multiple comparisons
+Use FDR method (Benjamini & Hochberg) to correct for mutliple comparisons (5 metabolites x 2 voxels = 10 models)
+```{r}
+#list models (voxel/metabolite pair)
+models<- c("acg_naa", "acg_cr", "acg_cho", "acg_ins", "acg_glx", "lag_naa", "lag_cr", "lag_cho", "lag_ins", "lag_glx")
+
+#list p-values for each model, matching order of models
+p<-c(.0217, .307, .0258, .0494, .23, .00093, .115, .00229, .636, 0)
+
+fdr_table<-data.frame(models, p)
+
+fdr_table$p_fdr<-p.adjust(p, method = "fdr", n= length(p))
+fdr_table
+
+#run FDR without LAG-Glx in case it's invalid:
+p2<-p<-c(.0217, .307, .0258, .0494, .23, .00093, .115, .00229, .636)
+p.adjust(p2, method = "fdr", n= length(p2))
+
+```
+
 
 ##Additional models
-Next steps following OHBM abstract submission (Dec. 2021): test random slopes (LAG only) & add tissue fraction as fixed effect (ACG & LAG)
+Next steps following OHBM abstract submission (Dec. 2021): test random slopes (LAG only) 
 
 ```{r}
 #read in data
@@ -613,16 +614,53 @@ summary(lag_glx_age_randslope)
 #boundary fit is singular
 anova(lag_glx_age, lag_glx_age_randslope) #fit did not improve with inclusion of random slopes
 
+```
 
-#Tissue fraction ACG
+##Tissue fraction analysis
+Calculate tissue fraction GM/(GM+WM) for each subject/voxel
+Add tissue fraction as fixed effect in lmer models
+```{r}
+library(ggplot2)
+library(EnvStats)
+library(lme4)
+library(lmerTest)
+#ACG
+#read in data
 acg_dat <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n113.csv")
 
+#create tissue fraction variable
+acg_dat$TissueFraction_GMWM <- acg_dat$fGM/(acg_dat$fGM + acg_dat$fWM)
+
+#plot tissue fraction to check for issues
+plot_ACG_tissuefraction <- ggplot(acg_dat, aes(TissueFraction_GMWM))
+plot_ACG_tissuefraction+ geom_density() #big skew
+plot_ACG_tissuefraction + geom_boxplot() #4 potential outliers
+rosnerTest(acg_dat$TissueFraction_GMWM, k = 4)
+#4 outliers: Obs. Num 37 (PS14_090), 24 (PS14_050), 93 (PS18_1601), 5 (PS14_009) - double check cogregistration
+
+#save database with tissue fraction
+write.csv(acg_dat, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n113_tissuefraction.csv", row.names = FALSE)
+
+#Add tissue fraction as fixed effect in ACG models
 acg_naa_age_tissue <- lmer(NAA_conc_molal ~ mri_age_y + (1 | subj_id), data=acg_dat, REML=FALSE)
 summary(acg_naa_age_randslope)
 
+#LAG
+#read in data
+lag_dat<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n320.csv")
+
+#create tissue fraction variable
+lag_dat$TissueFraction_GMWM <- lag_dat$fGM/(lag_dat$fGM + lag_dat$fWM)
+
+#plot tissue fraction to check for issues
+plot_LAG_tissuefraction <- ggplot(lag_dat, aes(TissueFraction_GMWM))
+plot_LAG_tissuefraction+ geom_density() #normal
+plot_LAG_tissuefraction + geom_boxplot() #6 potential outliers
+rosnerTest(lag_dat$TissueFraction_GMWM, k = 6) #no significant outliers
+
+#Add tissue fraction as a fixed effect in LAG models
+
 
 ```
-
-
 
 
