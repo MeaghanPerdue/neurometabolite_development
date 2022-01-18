@@ -909,7 +909,7 @@ Cho_age_tf_int_plot
 #linearity check
 Cho_age_tf_int_plot_lin <- interact_plot(lag_cho_age_TisFrac_int, pred = mri_age_y, modx = TissueFraction_GMWM, modx.values="terciles", plot.points=TRUE, linearity.check=TRUE)
 Cho_age_tf_int_plot_lin
-
+#seems to be some non-linear effects, try adding quadratic term
 
 #LAG Ins: age x tissue fraction interaction
 lag_ins_age_TisFrac_int<- lmer(Ins_conc_molal ~ mri_age_y * TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
@@ -928,6 +928,77 @@ Ins_age_tf_int_plot
 #linearity check
 Ins_age_tf_int_plot_lin <- interact_plot(lag_ins_age_TisFrac_int, pred = mri_age_y, modx = TissueFraction_GMWM, modx.values="terciles", plot.points=TRUE, linearity.check=TRUE)
 Ins_age_tf_int_plot_lin
+#seems to be some non-linear effects - try adding quadratic term
+
+
+```
+##Test quadratic effects of age with tissue fraction covariate in LAG models
+Interaction plots showed some nonlinear effects, so testing quadratic effects of age
+```{r}
+
+#create quadratic age variable
+lag_dat$mri_age_y2<- (lag_dat$mri_age_y)^2
+
+#NAA
+#age + tissue fraction model
+lag_naa_age_TisFrac <- lmer(NAA_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_naa_age_TisFrac)
+
+#add quadratic age term with all interactions
+lag_naa_age_TisFrac_quad <- lmer(NAA_conc_molal ~ mri_age_y * mri_age_y2 * TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_naa_age_TisFrac_quad) #no sig. effects
+
+anova(lag_naa_age_TisFrac, lag_naa_age_TisFrac_quad) #not sig.
+
+#Cre
+#age + tissue fraction model
+lag_cre_age_TisFrac<- lmer(Cre_PCr_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_cre_age_TisFrac)
+
+#add quadratic age term with all interactions
+lag_cre_age_TisFrac_quad<- lmer(Cre_PCr_conc_molal ~ mri_age_y * mri_age_y2 * TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_cre_age_TisFrac_quad)
+
+#compare models
+anova(lag_cre_age_TisFrac, lag_cre_age_TisFrac_quad) #not sig.
+
+#Cho
+
+#age x tissue fraction interaction model
+lag_cho_age_TisFrac_int<- lmer(Cho_GPC_PCh_conc_molal ~ mri_age_y * TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_cho_age_TisFrac_int) #interaction is sig. (p=.046)
+
+#add quadratic age term with all interactions
+lag_cho_age_TisFrac_int_quad <- lmer(Cho_GPC_PCh_conc_molal ~ mri_age_y * mri_age_y2 * TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_cho_age_TisFrac_int_quad) #no sig. effects
+
+#compare model fit
+anova(lag_cho_age_TisFrac_int, lag_cho_age_TisFrac_int_quad) #not sig., stick with age x tissue fraction model
+
+#Ins
+
+#age x tissue fraction interaction model
+lag_ins_age_TisFrac_int<- lmer(Ins_conc_molal ~ mri_age_y * TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_ins_age_TisFrac_int) #tissue fraction, age & interaction all sig.
+
+#add quadratic age term with all interactions
+lag_ins_age_TisFrac_int_quad<- lmer(Ins_conc_molal ~ mri_age_y * mri_age_y2 * TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_ins_age_TisFrac_int_quad) #no sig. effects
+
+anova(lag_ins_age_TisFrac_int, lag_ins_age_TisFrac_int_quad) #not sig.
+
+#Glx
+#age + tissue fraction model
+lag_glx_age_TisFrac<- lmer(Glu_Gln_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_glx_age_TisFrac)
+
+#add quadratic age term with all interactions
+lag_glx_age_TisFrac_quad<- lmer(Glu_Gln_conc_molal ~ mri_age_y * mri_age_y2 * TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_glx_age_TisFrac_quad) #no sig. effects
+#warning: boundary fit is singular
+
+#compare models
+anova(lag_glx_age_TisFrac, lag_glx_age_TisFrac_quad)  #significant 
 
 
 
@@ -1012,6 +1083,40 @@ Cho_age_tf_int_plot <- interact_plot(lag_cho_age_TisFrac_int, pred = mri_age_y, 
   theme_classic()
 Cho_age_tf_int_plot
   ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cho_age_tf_int.png")
+
+
+#LAG - Ins
+#Main effect of age 
+ #pull fixed effects for overall model
+fixef.lag_ins_age_TisFrac_int<-fixef(lag_ins_age_TisFrac_int)
+
+#subset dataframe with only subjects included in NAA analysis
+lag_dat_plot_Ins<- lag_dat %>% 
+  filter(! is.na(Ins_conc_molal))
+
+#calculate partial effect of age on Ins (remove effect of tissue fraction)
+lag_ins_partial <- remef(lag_ins_age_TisFrac_int, fix = c("TissueFraction_GMWM","mri_age_y:TissueFraction_GMWM")) #does NOT remove random effects variance
+
+#plot main effect of age controlling for tissue fraction and age x tissue fraction interaction
+plot_lag_ins_age_tf<-ggplot(lag_dat_plot_Ins, aes(x=mri_age_y, y=lag_ins_partial, na.exclude = TRUE, color=as.factor(female))) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_ins_partial, group=as.factor(subj_id)), size = .2, show.legend = FALSE) +
+  labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "Ins | Tissue Fraction") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_abline(aes(intercept = fixef.lag_ins_age_TisFrac_int[[1]], slope = fixef.lag_ins_age_TisFrac_int[[2]])) + 
+  theme_classic()
+plot_lag_ins_age_tf
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_ins_age_tf_maineffect.png")
+
+  
+#age x tissue fraction interaction plot
+Ins_age_tf_int_plot <- interact_plot(lag_ins_age_TisFrac_int, pred = mri_age_y, modx = TissueFraction_GMWM, data=lag_dat, plot.points=TRUE, legend.main="Tissue Fraction GM/(GM+WM)", modx.labels=c(".535 (-1 SD)", ".642 (Mean)", ".750 (+1 SD)")) +
+  labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "tCre (molal)") +
+  scale_color_viridis(option="mako", name="Tissue Fraction GM/(GM+WM)", begin= .32, end=1) +
+  theme_classic()
+Ins_age_tf_int_plot #only the slope for the lowest range of tissue fraction values (-1 SD) is significant 
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_ins_age_tf_int.png")
+
 
 ```
 
