@@ -581,7 +581,7 @@ summary(lag_cre_age)
 
 #test random slope Cre
 lag_cre_age_randslope<- lmer(Cre_PCr_conc_molal ~ mri_age_y + (1 + mri_age_y | subj_id), data=lag_dat, REML=FALSE)
-summary(lag_cre_ag_randslope)
+summary(lag_cre_age_randslope)
 #model failed to converge
 
 #basic age model Cho
@@ -793,7 +793,7 @@ lag_cre_age_TisFrac_sex<- lmer(Cre_PCr_conc_molal ~ mri_age_y + TissueFraction_G
 summary(lag_cre_age_TisFrac_sex)
 
 #compare model fit
-anova(lag_cre_age_TisFrac, lag_cre_age_TissFrac_sex) #not sig.
+anova(lag_cre_age_TisFrac, lag_cre_age_TisFrac_sex) #not sig.
 
 #Cho
 #basic age model
@@ -887,11 +887,58 @@ check_collinearity(lag_glx_age_TisFrac) #Low
 
 ```
 
+##Unpack interactions
+Use sim_slopes function from interactions package to conduct simple slopes analysis on continuous x continuous interactions
+```{r}
+library(interactions)
+
+#LAG Cho: age x tissue fraction interaction
+lag_cho_age_TisFrac_int<- lmer(Cho_GPC_PCh_conc_molal ~ mri_age_y * TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
+
+#run simple slopes analysis with Johnson-Neyman plot
+sim_slopes(lag_cho_age_TisFrac_int, pred = mri_age_y, modx = TissueFraction_GMWM, jnplot = TRUE)
+
+#save Johnson-Neyman plot
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cho_age_tf_int_JNplot.png")
+
+#create interaction plot (make it pretty later)
+#basic plot
+Cho_age_tf_int_plot <- interact_plot(lag_cho_age_TisFrac_int, pred = mri_age_y, modx = TissueFraction_GMWM)
+Cho_age_tf_int_plot
+
+#linearity check
+Cho_age_tf_int_plot_lin <- interact_plot(lag_cho_age_TisFrac_int, pred = mri_age_y, modx = TissueFraction_GMWM, modx.values="terciles", plot.points=TRUE, linearity.check=TRUE)
+Cho_age_tf_int_plot_lin
+
+
+#LAG Ins: age x tissue fraction interaction
+lag_ins_age_TisFrac_int<- lmer(Ins_conc_molal ~ mri_age_y * TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
+
+#run simple slopes analysis with Johnson-Neyman plot
+sim_slopes(lag_ins_age_TisFrac_int, pred = mri_age_y, modx = TissueFraction_GMWM, jnplot = TRUE)
+
+#save Johnson-Neyman plot
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_ins_age_tf_int_JNplot.png")
+
+#create interaction plot (make it pretty later)
+#basic plot
+Ins_age_tf_int_plot <- interact_plot(lag_ins_age_TisFrac_int, pred = mri_age_y, modx = TissueFraction_GMWM)
+Ins_age_tf_int_plot
+
+#linearity check
+Ins_age_tf_int_plot_lin <- interact_plot(lag_ins_age_TisFrac_int, pred = mri_age_y, modx = TissueFraction_GMWM, modx.values="terciles", plot.points=TRUE, linearity.check=TRUE)
+Ins_age_tf_int_plot_lin
+
+
+
+```
+
+
 ##Print model summaries 
 Print formatted model summaries and tables using report and sjplot package
 ```{r}
 library(report)
-library(sjplot) #try for pretty summary tables
+#library(sjplot) #try for pretty summary tables
 
 summary(lag_naa_age_TisFrac)
 report(lag_naa_age_TisFrac)
@@ -924,15 +971,14 @@ lag_dat_plot<- lag_dat %>%
 lag_naa_partial <- remef(lag_naa_age_TisFrac, fix = "TissueFraction_GMWM") #does NOT remove random effects variance
 
 #create plot to show NAA ~ age while controlling for Tissue Fraction
-plot_lag_naa_age<-ggplot(lag_dat_plot, aes(x=mri_age_y, y=lag_naa_partial, na.exclude = TRUE, color=as.factor(female)))
-plot_lag_naa_age + 
+plot_lag_naa_age_tf<-ggplot(lag_dat_plot, aes(x=mri_age_y, y=lag_naa_partial, na.exclude = TRUE, color=as.factor(female))) +
   geom_point() +
-  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_naa_partial, color=as.factor(female), fill=as.factor(subj_id)), size = .2, show.legend = FALSE) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_naa_partial, group=as.factor(subj_id)), size = .2, show.legend = FALSE) +
   labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "tNAA | Tissue Fraction") +
   scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
   geom_abline(aes(intercept = fixef.lag_naa_TisFrac[[1]], slope = fixef.lag_naa_TisFrac[[2]])) + 
   theme_classic()
-
+plot_lag_naa_age_tf
 ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_naa_age_partialef.png")
 
 
@@ -948,16 +994,24 @@ lag_dat_plot_Cre<- lag_dat %>%
 #calculate partial effect of age on Cre (remove effect of tissue fraction)
 lag_cre_partial <- remef(lag_cre_age_TisFrac, fix = "TissueFraction_GMWM") #does NOT remove random effects variance
 
-plot_lag_cre_age<-ggplot(lag_dat_plot_Cre, aes(x=mri_age_y, y=lag_cre_partial, na.exclude = TRUE, color=as.factor(female)))
-plot_lag_cre_age + 
+plot_lag_cre_age_tf<-ggplot(lag_dat_plot_Cre, aes(x=mri_age_y, y=lag_cre_partial, na.exclude = TRUE, color=as.factor(female))) +
   geom_point() +
-  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_cre_partial, color=as.factor(female), fill=as.factor(subj_id)), size = .2, show.legend = FALSE) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_cre_partial, group=as.factor(subj_id)), size = .2, show.legend = FALSE) +
   labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "tCre | Tissue Fraction") +
   scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
   geom_abline(aes(intercept = fixef.lag_cre_age_TisFrac[[1]], slope = fixef.lag_cre_age_TisFrac[[2]])) + 
   theme_classic()
-ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cre_age_partialef.png")
+plot_lag_cre_age_tf
+  ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cre_age_partialef.png")
 
+
+#LAG - Cho
+Cho_age_tf_int_plot <- interact_plot(lag_cho_age_TisFrac_int, pred = mri_age_y, modx = TissueFraction_GMWM, data=lag_dat, plot.points=TRUE, legend.main="Tissue Fraction GM/(GM+WM)", modx.labels=c(".535 (-1 SD)", ".642 (Mean)", ".750 (+1 SD)")) +
+  labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "tCho (molal)") + 
+  scale_color_viridis(option="mako", name="Tissue Fraction GM/(GM+WM)", begin= .32, end=1) +
+  theme_classic()
+Cho_age_tf_int_plot
+  ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cho_age_tf_int.png")
 
 ```
 
