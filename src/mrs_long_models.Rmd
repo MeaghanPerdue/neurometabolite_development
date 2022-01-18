@@ -7,13 +7,16 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(root.dir = '/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/')
-library(dplyr)
+library(tidyverse)
 library(lme4)
 library(lmerTest)
 library(ggplot2)
 library(ggpubr)
 library(EnvStats)
 library(psych)
+library(viridis)
+library(remef)
+
 setwd('/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data')
 ```
 
@@ -60,8 +63,6 @@ lag_dat <- left_join(lag_demo, lag_molal, by = "File_ID")
 lag_dat$subj_id<-as.character(lag_dat$subj_id) #make subj_id character type
 
 write.csv(lag_dat, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_n321.csv", row.names = FALSE)
-
-
 
 ```
 ##Check data distribution & outliers
@@ -349,7 +350,7 @@ lag_dat$mri_age_y2 <- (lag_dat$mri_age_y)^2
 lag_naa_age2<- lmer(NAA_conc_molal ~ mri_age_y + mri_age_y2 + (1 | subj_id), data=lag_dat, REML=FALSE)
 summary(lag_naa_age2) #age^2 p=.0447
 
-anova(lag_naa_age, lag_naa_age2) #fit improved p=0.44
+anova(lag_naa_age, lag_naa_age2) #fit improved p=.044
 
 ```
 Cre
@@ -552,7 +553,7 @@ fdr_table$p_fdr<-p.adjust(p, method = "fdr", n= length(p))
 fdr_table
 
 #run FDR without LAG-Glx in case it's invalid:
-p2<-p<-c(.0217, .307, .0258, .0494, .23, .00093, .115, .00229, .636)
+p2<-c(.0217, .307, .0258, .0494, .23, .00093, .115, .00229, .636)
 p.adjust(p2, method = "fdr", n= length(p2))
 
 ```
@@ -619,6 +620,7 @@ anova(lag_glx_age, lag_glx_age_randslope) #fit did not improve with inclusion of
 ##Tissue fraction analysis
 Calculate tissue fraction GM/(GM+WM) for each subject/voxel
 Add tissue fraction as fixed effect in lmer models
+ACG
 ```{r}
 library(ggplot2)
 library(EnvStats)
@@ -637,14 +639,85 @@ plot_ACG_tissuefraction+ geom_density() #big skew
 plot_ACG_tissuefraction + geom_boxplot() #4 potential outliers
 rosnerTest(acg_dat$TissueFraction_GMWM, k = 4)
 #4 outliers: Obs. Num 37 (PS14_090), 24 (PS14_050), 93 (PS18_1601), 5 (PS14_009) - double check cogregistration
+#PS14_090 is shifted to the left and includes substantial WM - EXCLUDE
+#PS14_050 is shifted to the left and T1 quality is poor - EXCLUDE
+#PS18_1601 head tilted so voxel captures a bit of WM in the left hemi., a little anterior; doesn't seem terrible
+#PS14_009 looks like chin was tipped down toward chest a bit, corner of voxel captures some CC white matter but seems ok
 
 #save database with tissue fraction
 write.csv(acg_dat, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n113_tissuefraction.csv", row.names = FALSE)
 
-#Add tissue fraction as fixed effect in ACG models
-acg_naa_age_tissue <- lmer(NAA_conc_molal ~ mri_age_y + (1 | subj_id), data=acg_dat, REML=FALSE)
-summary(acg_naa_age_randslope)
+#exclude scans PS14_090 and PS14_050 due to outlier status coregistration issues
+acg_dat_tf<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n113_tissuefraction.csv")
+acg_dat_tf["37", "TissueFraction_GMWM"] <- NA
+acg_dat_tf["24", "TissueFraction_GMWM"] <- NA
 
+acg_dat_tf <- subset(acg_dat_tf, study_code != c("PS14_090", "PS14_050"))
+
+
+#check correlation between tissue fraction and age
+acg_TisFrac_age <- lmer(TissueFraction_GMWM ~ mri_age_y + (1 | subj_id), data=acg_dat_tf, REML=FALSE)
+summary(acg_TisFrac_age)
+#not sig.
+
+#Add tissue fraction as fixed effect in ACG models
+#NAA
+#basic age model
+acg_naa_age <- lmer(NAA_conc_molal ~ mri_age_y + (1 | subj_id), data=acg_dat_tf, REML=FALSE)
+summary(acg_naa_age)
+
+#add tissue fraction
+acg_naa_age_tf <- lmer(NAA_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=acg_dat_tf, REML=FALSE)
+summary(acg_naa_age_tf) #no sig. effect of tissue fraction
+
+#compare models
+anova(acg_naa_age, acg_naa_age_tf) #model fit not sig. different
+
+#Cre
+#basic age model
+acg_cre_age <- lmer(Cre_PCr_conc_molal ~ mri_age_y + (1 | subj_id), data=acg_dat_tf, REML=FALSE)
+summary(acg_cre_age)
+
+#add tissue fraction
+acg_cre_age_tf <- lmer(Cre_PCr_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=acg_dat_tf, REML=FALSE)
+summary(acg_cre_age_tf)
+
+#Cho
+#basic age model
+acg_cho_age <- lmer(Cho_GPC_PCh_conc_molal ~ mri_age_y + (1 | subj_id), data=acg_dat_tf, REML=FALSE)
+summary(acg_cho_age)
+
+#add tissue fraction
+acg_cho_age_tf <- lmer(Cho_GPC_PCh_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=acg_dat_tf, REML=FALSE)
+summary(acg_cho_age_tf)
+
+#compare models
+anova(acg_cho_age, acg_cho_age_tf) #fit not significantly different
+
+#Ins
+#basic age model
+acg_ins_age <- lmer(Ins_conc_molal ~ mri_age_y + (1 | subj_id), data=acg_dat_tf, REML=FALSE)
+summary(acg_ins_age)
+
+#add tissue fraction
+acg_ins_age_tf <- lmer(Ins_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=acg_dat_tf, REML=FALSE)
+summary(acg_ins_age_tf)
+
+#Glx
+#basic age model
+acg_glx_age <- lmer(Glu_Gln_conc_molal ~ mri_age_y + (1 | subj_id), data=acg_dat_tf, REML=FALSE)
+summary(acg_glx_age)
+
+#add tissue fraction
+acg_glx_age_tf <- lmer(Glu_Gln_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=acg_dat_tf, REML=FALSE)
+summary(acg_glx_age_tf)
+
+
+
+```
+
+LAG Tissue Fraction models
+```{r}
 #LAG
 #read in data
 lag_dat<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n320.csv")
@@ -658,9 +731,233 @@ plot_LAG_tissuefraction+ geom_density() #normal
 plot_LAG_tissuefraction + geom_boxplot() #6 potential outliers
 rosnerTest(lag_dat$TissueFraction_GMWM, k = 6) #no significant outliers
 
+write.csv(lag_dat, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n320_tissuefraction.csv")
+
+#check correlation between tissue fraction and age
+lag_TisFrac_age <- lmer(TissueFraction_GMWM ~ mri_age_y + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_TisFrac_age)
+#tissue fraction is significantly negatively associated with age
+
+#in a simple correlation test
+cor.test(lag_dat$mri_age_y, lag_dat$TissueFraction_GMWM) # also significant: r = -.37
+
+
 #Add tissue fraction as a fixed effect in LAG models
+#basic age model NAA
+lag_naa_age<- lmer(NAA_conc_molal ~ mri_age_y + (1 | subj_id), data=lag_dat, REML=FALSE)
+
+#add tissue fraction
+lag_naa_age_TisFrac <- lmer(NAA_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_naa_age_TisFrac)
+
+#compare model fit
+anova(lag_naa_age, lag_naa_age_TisFrac) #fit significantly improved
+
+#add tissue fraction interaction with age
+lag_naa_age_TisFracXage <- lmer(NAA_conc_molal ~ mri_age_y * TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_naa_age_TisFracXage)
+#interaction term for agexTissueFraction not sig.
+
+#compare model fit
+anova(lag_naa_age_TisFrac, lag_naa_age_TisFracXage) #not sig., stick with age + TissueFraction model
+
+#add sex to tissue fraction model
+lag_naa_age_TisFrac_sex <- lmer(NAA_conc_molal ~ mri_age_y + TissueFraction_GMWM + female + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_naa_age_TisFrac_sex) #sex not significant
+
+#compare model fit
+anova(lag_naa_age_TisFrac, lag_naa_age_TisFrac_sex) #not sig., stick with age + TissueFraction model
+
+#Cre
+#basic age model
+lag_cre_age<- lmer(Cre_PCr_conc_molal ~ mri_age_y + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_cre_age)
+
+#add tissue fraction
+lag_cre_age_TisFrac<- lmer(Cre_PCr_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_cre_age_TisFrac)
+
+#compare model fit
+anova(lag_cre_age, lag_cre_age_TisFrac) #sig.
+
+#add interaction
+lag_cre_age_TisFrac_int<- lmer(Cre_PCr_conc_molal ~ mri_age_y * TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_cre_age_TisFrac_int)
+
+#compare model fit
+anova(lag_cre_age_TisFrac, lag_cre_age_TisFrac_int) #not sig.
+
+#add sex to tissue fraction model
+
+lag_cre_age_TisFrac_sex<- lmer(Cre_PCr_conc_molal ~ mri_age_y + TissueFraction_GMWM + female + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_cre_age_TisFrac_sex)
+
+#compare model fit
+anova(lag_cre_age_TisFrac, lag_cre_age_TissFrac_sex) #not sig.
+
+#Cho
+#basic age model
+lag_cho_age<- lmer(Cho_GPC_PCh_conc_molal ~ mri_age_y + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_cho_age)
+
+#add tissue fraction
+lag_cho_age_TisFrac<- lmer(Cho_GPC_PCh_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_cho_age_TisFrac)
+
+#compare model fit
+anova(lag_cho_age, lag_cho_age_TisFrac) #sig
+
+#add interaction
+lag_cho_age_TisFrac_int<- lmer(Cho_GPC_PCh_conc_molal ~ mri_age_y * TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_cho_age_TisFrac_int) #interaction is sig. (p=.046)
+
+#compare model fit
+anova(lag_cho_age_TisFrac, lag_cho_age_TisFrac_int) #sig. (p<.046)
+
+#add sex to model
+lag_cho_age_TisFrac_int_sex<- lmer(Cho_GPC_PCh_conc_molal ~ mri_age_y * TissueFraction_GMWM + female + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_cho_age_TisFrac_int_sex) #not sig.
+
+#compare model fit
+anova(lag_cho_age_TisFrac_int, lag_cho_age_TisFrac_int_sex) #not sig.
+
+#Ins
+#basic age model
+lag_ins_age<- lmer(Ins_conc_molal ~ mri_age_y + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_ins_age)
+
+#add tissue fraction
+lag_ins_age_TisFrac<- lmer(Ins_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_ins_age_TisFrac) #tissue fraction sig.; age not sig.
+
+#compare model fit
+anova(lag_ins_age, lag_ins_age_TisFrac) #sig.
+
+#add interaction
+
+lag_ins_age_TisFrac_int<- lmer(Ins_conc_molal ~ mri_age_y * TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_ins_age_TisFrac_int) #tissue fraction, age & interaction all sig.
+
+#compare model fit
+anova(lag_ins_age_TisFrac, lag_ins_age_TisFrac_int) #sig.
+
+#add sex
+lag_ins_age_TisFrac_int_sex<- lmer(Ins_conc_molal ~ mri_age_y * TissueFraction_GMWM + female + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_ins_age_TisFrac_int_sex) #tissue fraction, age & interaction all sig.
+
+#compare model fit
+anova(lag_ins_age_TisFrac_int, lag_ins_age_TisFrac_int_sex) #not sig.
+
+#Glx
+#basic age model
+lag_glx_age<- lmer(Glu_Gln_conc_molal ~ mri_age_y + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_glx_age)
+
+#add tissue fraction
+lag_glx_age_TisFrac<- lmer(Glu_Gln_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_glx_age_TisFrac)
+
+#compare models
+anova(lag_glx_age, lag_glx_age_TisFrac) #sig
+
+#add interaction
+lag_glx_age_TisFrac_int<- lmer(Glu_Gln_conc_molal ~ mri_age_y * TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_glx_age_TisFrac_int)
+
+#compare models
+anova(lag_glx_age_TisFrac, lag_glx_age_TisFrac_int) #not sig
+
+#add sex
+lag_glx_age_TisFrac_sex<- lmer(Glu_Gln_conc_molal ~ mri_age_y + TissueFraction_GMWM + female + (1 | subj_id), data=lag_dat, REML=FALSE)
+summary(lag_glx_age_TisFrac_sex)
+
+#compare models
+anova(lag_glx_age_TisFrac, lag_glx_age_TisFrac_sex) #not sig
+
+#check models for multicollinearity
+library(performance)
+
+check_collinearity(lag_naa_age_TisFrac) #Low
+check_collinearity(lag_cre_age_TisFrac) #Low
+check_collinearity(lag_cho_age_TisFrac_int) #interaction term causes inflated VIFs - check model without interaction
+check_collinearity(lag_cho_age_TisFrac) #Low
+check_collinearity(lag_ins_age_TisFrac) #Low
+check_collinearity(lag_glx_age_TisFrac) #Low
 
 
 ```
 
+##Print model summaries 
+Print formatted model summaries and tables using report and sjplot package
+```{r}
+library(report)
+library(sjplot) #try for pretty summary tables
+
+summary(lag_naa_age_TisFrac)
+report(lag_naa_age_TisFrac)
+report_table(lag_naa_age_TisFrac)
+
+
+summary(lag_cre_age_TisFrac)
+report(lag_cre_age_TisFrac)
+
+summary(lag_cho_age_TisFrac_int)
+report(lag_cho_age_TisFrac_int)
+
+
+```
+##Plot results of models including tissue fraction
+Estimate metabolite residuals using remef
+Include individual slopes (estimated via linear models by subject) using geom_smooth()
+Include overall fit line using geom_abline
+```{r}
+#LAG - NAA
+
+#pull fixed effects for overall model
+fixef.lag_naa_TisFrac<-fixef(lag_naa_age_TisFrac)
+
+#subset dataframe with only subjects included in NAA analysis
+lag_dat_plot<- lag_dat %>% 
+  filter(! is.na(NAA_conc_molal))
+
+#calculate partial effect of age on tNAA (remove effect of tissue fraction)
+lag_naa_partial <- remef(lag_naa_age_TisFrac, fix = "TissueFraction_GMWM") #does NOT remove random effects variance
+
+#create plot to show NAA ~ age while controlling for Tissue Fraction
+plot_lag_naa_age<-ggplot(lag_dat_plot, aes(x=mri_age_y, y=lag_naa_partial, na.exclude = TRUE, color=as.factor(female)))
+plot_lag_naa_age + 
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_naa_partial, color=as.factor(female), fill=as.factor(subj_id)), size = .2, show.legend = FALSE) +
+  labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "tNAA | Tissue Fraction") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_abline(aes(intercept = fixef.lag_naa_TisFrac[[1]], slope = fixef.lag_naa_TisFrac[[2]])) + 
+  theme_classic()
+
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_naa_age_partialef.png")
+
+
+#LAG - Cre
+
+#pull fixed effects for overall model
+fixef.lag_cre_age_TisFrac<-fixef(lag_cre_age_TisFrac)
+
+#subset dataframe with only subjects included in NAA analysis
+lag_dat_plot_Cre<- lag_dat %>% 
+  filter(! is.na(Cre_PCr_conc_molal))
+
+#calculate partial effect of age on Cre (remove effect of tissue fraction)
+lag_cre_partial <- remef(lag_cre_age_TisFrac, fix = "TissueFraction_GMWM") #does NOT remove random effects variance
+
+plot_lag_cre_age<-ggplot(lag_dat_plot_Cre, aes(x=mri_age_y, y=lag_cre_partial, na.exclude = TRUE, color=as.factor(female)))
+plot_lag_cre_age + 
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_cre_partial, color=as.factor(female), fill=as.factor(subj_id)), size = .2, show.legend = FALSE) +
+  labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "tCre | Tissue Fraction") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_abline(aes(intercept = fixef.lag_cre_age_TisFrac[[1]], slope = fixef.lag_cre_age_TisFrac[[2]])) + 
+  theme_classic()
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cre_age_partialef.png")
+
+
+```
 
