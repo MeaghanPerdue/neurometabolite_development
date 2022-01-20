@@ -1,7 +1,7 @@
 ---
 title: "MRS Longitudinal Modelling"
 author: "Meaghan Perdue"
-date: "12/14/2021"
+date: "2022/01/19"
 output: html_document
 ---
 
@@ -17,7 +17,6 @@ library(psych)
 library(viridis)
 library(remef)
 
-setwd('/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data')
 ```
 
 ## Organize data
@@ -35,7 +34,7 @@ acg_LCM_corr<-unique(acg_LCM_corr) #remove duplicate rows
 acg_LCM_corr["4", "Cho_GPC_PCh_conc_molar"]<-NA #Cho conc invalid for PS10008_PS14_046_2386 due to spike in spectrum
 acg_LCM_corr["4", "Cho_GPC_PCh_conc_molal"]<-NA #Cho conc invalid for PS10008_PS14_046_2386 due to spike in spectrum
 
-write.csv(acg_LCM_corr, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/ACG_LCM_CorrectedTable_12-14-2021_all.csv", row.names = FALSE)
+write.csv(acg_LCM_corr, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/ACG_LCM_CorrectedTable_19-01-2021_all.csv", row.names = FALSE)
 
 acg_molal <- acg_LCM_corr %>%
   dplyr::select(File_ID, fGM, fWM, fCSF, NAA_conc_molal, Cre_PCr_conc_molal, Cho_GPC_PCh_conc_molal, Ins_conc_molal, Glu_conc_molal, Glu_Gln_conc_molal)
@@ -43,7 +42,11 @@ acg_molal <- acg_LCM_corr %>%
 acg_demo <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_analysis_subs.csv")
 
 acg_dat <- left_join(acg_demo, acg_molal, by = "File_ID")
-write.csv(acg_dat, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_n113.csv", row.names = FALSE)
+
+#convert subj_id variable to "character" type for later merging
+acg_dat$subj_id <- as.character(acg_dat$subj_id)
+
+write.csv(acg_dat, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_n114_usethisone.csv", row.names = FALSE)
 
 lag_batch1 <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/LAG_LCM_CorrectedTable_12-13-2021-15-18.csv")
 
@@ -52,7 +55,7 @@ lag_batch2 <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschoo
 lag_batch3 <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/LAG_LCM_CorrectedTable_12-14-2021-12-18.csv")
 
 lag_LCM_corr <- bind_rows(lag_batch1, lag_batch2, lag_batch3)
-write.csv(lag_LCM_corr, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/LAG_LCM_CorrectedTable_12-14-2021_all.csv", row.names = FALSE)
+write.csv(lag_LCM_corr, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/LAG_LCM_CorrectedTable_19-01-2022_all.csv", row.names = FALSE)
 
 lag_molal <- lag_LCM_corr %>%
   dplyr::select(File_ID, fGM, fWM, fCSF, NAA_conc_molal, Cre_PCr_conc_molal, Cho_GPC_PCh_conc_molal, Ins_conc_molal, Glu_conc_molal, Glu_Gln_conc_molal)
@@ -62,7 +65,7 @@ lag_demo <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_
 lag_dat <- left_join(lag_demo, lag_molal, by = "File_ID")
 lag_dat$subj_id<-as.character(lag_dat$subj_id) #make subj_id character type
 
-write.csv(lag_dat, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_n321.csv", row.names = FALSE)
+write.csv(lag_dat, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_n320_usethisone.csv", row.names = FALSE)
 
 ```
 ##Check data distribution & outliers
@@ -72,7 +75,7 @@ ACG
 ```{r}
 plot_age <- ggplot(acg_dat, aes(mri_age_y))
 plot_age + geom_density()
-#age skewed
+#age skewed (expected given study design, accounting for repeated measures in lmer)
 
 plot_naa <- ggplot(acg_dat, aes(NAA_conc_molal))
 plot_naa + geom_density()
@@ -101,13 +104,13 @@ plot_glx + geom_density()
 plot_glx + geom_boxplot()
 rosnerTest(acg_dat$Glu_Gln_conc_molal, k = 1)
 
-write.csv(acg_dat, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n113.csv", row.names = FALSE)
+write.csv(acg_dat, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n114.csv", row.names = FALSE)
 ```
 LAG
 ```{r}
 plot_age <- ggplot(lag_dat, aes(mri_age_y))
 plot_age + geom_density()
-#age skewed
+#age skewed, we're accounting for repeated measures with lmer
 
 plot_naa <- ggplot(lag_dat, aes(NAA_conc_molal))
 plot_naa + geom_density()
@@ -142,11 +145,9 @@ lag_dat["241", "Glu_Gln_conc_molal"] <- NA
 lag_dat["296", "Glu_Gln_conc_molal"] <- NA
 
 #exclude PS17_047 from all analyses due to outlier status on multiple metabolites and issues in spectrum (noisy, structure in resid)
-lag_dat["241", "NAA_conc_molal"] <- NA
-lag_dat["241", "Cre_PCr_conc_molal"] <- NA
-lag_dat["241", "Cho_GPC_PCh_conc_molal"] <- NA
+lag_dat <- lag_dat[ !(lag_dat$study_code %in% "PS17_047"), ]
 
-write.csv(lag_dat, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n320.csv", row.names = FALSE)
+write.csv(lag_dat, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n319.csv", row.names = FALSE)
 ```
 
 ##Descriptive stats
@@ -270,20 +271,20 @@ anova(acg_glx_age,acg_glx_ageXsex)
 Create scatter plot with regression line based on model predictions
 NAA
 ```{r}
-acg_dat <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n113.csv")
+acg_dat <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n114.csv")
 
 #pull intercept and slope from model for regression line
 fixef.acg_naa<-fixef(acg_naa_age)
 
 #plot
-plot_acg_naa_age<-ggplot(acg_dat, aes(x=mri_age_y, y=NAA_conc_molal,color=as.factor(female)))
-plot_acg_naa_age + 
+plot_acg_naa_age<-ggplot(acg_dat, aes(x=mri_age_y, y=NAA_conc_molal,color=as.factor(female))) +
   geom_point() +
-  geom_line(aes(group = as.factor(subj_id))) +
   labs(title = "Anterior Cingulate", x = "Age (years)", y = "tNAA (molal)") +
   scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=NAA_conc_molal, group=as.factor(subj_id)), size = .3, show.legend = FALSE) +
   geom_abline(aes(intercept = fixef.acg_naa[[1]], slope= fixef.acg_naa[[2]])) + 
   theme_classic()
+plot_acg_naa_age
 ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_naa_age_viridis.png")
 
 
@@ -294,14 +295,14 @@ Cho
 fixef.acg_cho<-fixef(acg_cho_age)
 
 #plot
-plot_acg_cho_age<-ggplot(acg_dat, aes(x=mri_age_y, y=Cho_GPC_PCh_conc_molal,color=as.factor(female)))
-plot_acg_cho_age + 
+plot_acg_cho_age<-ggplot(acg_dat, aes(x=mri_age_y, y=Cho_GPC_PCh_conc_molal,color=as.factor(female))) + 
   geom_point() +
-  geom_line(aes(group = as.factor(subj_id))) +
   labs(title = "Anterior Cingulate", x = "Age (years)", y = "tCho (molal)") +
   scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=Cho_GPC_PCh_conc_molal, group=as.factor(subj_id)), size = .3, show.legend = FALSE) +
   geom_abline(aes(intercept = fixef.acg_cho[[1]], slope= fixef.acg_cho[[2]])) + 
   theme_classic()
+plot_acg_cho_age
 ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_cho_age_viridis.png")
 ```
 Ins
@@ -310,14 +311,14 @@ Ins
 fixef.acg_ins<-fixef(acg_ins_age)
 
 #plot
-plot_acg_ins_age<-ggplot(acg_dat, aes(x=mri_age_y, y=Ins_conc_molal,color=as.factor(female)))
-plot_acg_ins_age + 
+plot_acg_ins_age<-ggplot(acg_dat, aes(x=mri_age_y, y=Ins_conc_molal,color=as.factor(female))) + 
   geom_point() +
-  geom_line(aes(group = as.factor(subj_id))) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=Ins_conc_molal, group=as.factor(subj_id)), size = .3, show.legend = FALSE) +
   labs(title = "Anterior Cingulate", x = "Age (years)", y = "Ins (molal)") +
   scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
   geom_abline(aes(intercept = fixef.acg_ins[[1]], slope= fixef.acg_ins[[2]])) + 
   theme_classic()
+plot_acg_ins_age
 ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_ins_age_viridis.png")
 ```
 
@@ -342,16 +343,6 @@ summary(lag_naa_ageXsex)
 anova(lag_naa_age,lag_naa_ageXsex)
 
 #including sex in model does not significantly improve fit 
-
-#test quadratic effect of age
-#create age^2  variable
-lag_dat$mri_age_y2 <- (lag_dat$mri_age_y)^2
-
-lag_naa_age2<- lmer(NAA_conc_molal ~ mri_age_y + mri_age_y2 + (1 | subj_id), data=lag_dat, REML=FALSE)
-summary(lag_naa_age2) #age^2 p=.0447
-
-anova(lag_naa_age, lag_naa_age2) #fit improved p=.044
-
 ```
 Cre
 ```{r}
@@ -404,7 +395,7 @@ anova(lag_ins_age,lag_ins_ageXsex)
 Glx
 ```{r}
 lag_glx_age<- lmer(Glu_Gln_conc_molal ~ mri_age_y + (1 | subj_id), data=lag_dat, REML=FALSE)
-isSingular(lag_glx_age) # TRUE: model is almost/near singular (parameters are on the boundary of the feasible parameter space: random effects variance = 0)
+# boundary (singular) fit: model is almost/near singular (parameters are on the boundary of the feasible parameter space: random effects variance = 0)
 summary(lag_glx_age)
 
 lag_glx_age_sex<- lmer(Glu_Gln_conc_molal ~ mri_age_y + female + (1 | subj_id), data=lag_dat, REML=FALSE)
@@ -422,20 +413,18 @@ anova(lag_glx_age,lag_glx_ageXsex)
 Create scatter plot with regression line based on model predictions
 NAA
 ```{r}
-lag_dat<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n320.csv")
-
 #pull intercept and slope from model for regression line
 fixef.lag_naa<-fixef(lag_naa_age)
 
 #plot
-plot_lag_naa_age<-ggplot(lag_dat, aes(x=mri_age_y, y=NAA_conc_molal,color=as.factor(female)))
-plot_lag_naa_age + 
+plot_lag_naa_age<-ggplot(lag_dat, aes(x=mri_age_y, y=NAA_conc_molal,color=as.factor(female))) +
   geom_point() +
-  geom_line(aes(group = as.factor(subj_id))) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=NAA_conc_molal, group=as.factor(subj_id)), size = .3, show.legend = FALSE) +
   labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "tNAA (molal)") +
   scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
   geom_abline(aes(intercept = fixef.lag_naa[[1]], slope= fixef.lag_naa[[2]])) + 
   theme_classic()
+plot_lag_naa_age 
 ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_naa_age_viridis.png")
 ```
 
@@ -445,14 +434,14 @@ Cho
 fixef.lag_cho<-fixef(lag_cho_age)
 
 #plot
-plot_lag_cho_age<-ggplot(lag_dat, aes(x=mri_age_y, y=Cho_GPC_PCh_conc_molal,color=as.factor(female)))
-plot_lag_cho_age + 
+plot_lag_cho_age<-ggplot(lag_dat, aes(x=mri_age_y, y=Cho_GPC_PCh_conc_molal,color=as.factor(female))) + 
   geom_point() +
-  geom_line(aes(group = as.factor(subj_id))) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=Cho_GPC_PCh_conc_molal, group=as.factor(subj_id)), size = .3, show.legend = FALSE) +
   labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "tCho (molal)") +
   scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
   geom_abline(aes(intercept = fixef.lag_cho[[1]], slope= fixef.lag_cho[[2]])) + 
   theme_classic()
+plot_lag_cho_age 
 ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cho_age_viridis.png")
 
 ```
@@ -463,14 +452,14 @@ Glx
 fixef.lag_glx<-fixef(lag_glx_age)
 
 #plot
-plot_lag_glx_age<-ggplot(lag_dat, aes(x=mri_age_y, y=Glu_Gln_conc_molal,color=as.factor(female)))
-plot_lag_glx_age + 
+plot_lag_glx_age<-ggplot(lag_dat, aes(x=mri_age_y, y=Glu_Gln_conc_molal,color=as.factor(female))) +
   geom_point() +
-  geom_line(aes(group = as.factor(subj_id))) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=Glu_Gln_conc_molal, group=as.factor(subj_id)), size = .3, show.legend = FALSE) +
   labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "Glx (molal)") +
   scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
   geom_abline(aes(intercept = fixef.lag_glx[[1]], slope= fixef.lag_glx[[2]])) + 
   theme_classic()
+plot_lag_glx_age 
 ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_glx_age_viridis.png")
 
 ```
@@ -541,6 +530,7 @@ ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/resul
 ##Correct for multiple comparisons
 Use FDR method (Benjamini & Hochberg) to correct for mutliple comparisons (5 metabolites x 2 voxels = 10 models)
 ```{r}
+## 19-01-2022: need to re-run if using these models!
 #list models (voxel/metabolite pair)
 models<- c("acg_naa", "acg_cr", "acg_cho", "acg_ins", "acg_glx", "lag_naa", "lag_cr", "lag_cho", "lag_ins", "lag_glx")
 
@@ -564,7 +554,7 @@ Next steps following OHBM abstract submission (Dec. 2021): test random slopes (L
 
 ```{r}
 #read in data
-lag_dat<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n320.csv")
+lag_dat<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n319.csv")
 
 #basic age model NAA
 lag_naa_age<- lmer(NAA_conc_molal ~ mri_age_y + (1 | subj_id), data=lag_dat, REML=FALSE)
@@ -573,7 +563,8 @@ summary(lag_naa_age)
 #test random slope NAA
 lag_naa_age_randslope <- lmer(NAA_conc_molal ~ mri_age_y + (1 + mri_age_y | subj_id), data=lag_dat, REML=FALSE)
 summary(lag_naa_age_randslope)
-#model failed to converge 
+
+anova(lag_naa_age, lag_naa_age_randslope) #not sig.
 
 #basic age model Cre
 lag_cre_age<- lmer(Cre_PCr_conc_molal ~ mri_age_y + (1 | subj_id), data=lag_dat, REML=FALSE)
@@ -581,7 +572,6 @@ summary(lag_cre_age)
 
 #test random slope Cre
 lag_cre_age_randslope<- lmer(Cre_PCr_conc_molal ~ mri_age_y + (1 + mri_age_y | subj_id), data=lag_dat, REML=FALSE)
-summary(lag_cre_age_randslope)
 #model failed to converge
 
 #basic age model Cho
@@ -626,9 +616,9 @@ library(ggplot2)
 library(EnvStats)
 library(lme4)
 library(lmerTest)
-#ACG
+#ACG - USE THESE MODELS!! (identified 2 subjects with poor coregistration & removed them)
 #read in data
-acg_dat <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n113.csv")
+acg_dat <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n114.csv")
 
 #create tissue fraction variable
 acg_dat$TissueFraction_GMWM <- acg_dat$fGM/(acg_dat$fGM + acg_dat$fWM)
@@ -644,16 +634,11 @@ rosnerTest(acg_dat$TissueFraction_GMWM, k = 4)
 #PS18_1601 head tilted so voxel captures a bit of WM in the left hemi., a little anterior; doesn't seem terrible
 #PS14_009 looks like chin was tipped down toward chest a bit, corner of voxel captures some CC white matter but seems ok
 
-#save database with tissue fraction
-write.csv(acg_dat, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n113_tissuefraction.csv", row.names = FALSE)
-
 #exclude scans PS14_090 and PS14_050 due to outlier status coregistration issues
-acg_dat_tf<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n113_tissuefraction.csv")
-acg_dat_tf["37", "TissueFraction_GMWM"] <- NA
-acg_dat_tf["24", "TissueFraction_GMWM"] <- NA
+acg_dat_tf <- subset(acg_dat, study_code != c("PS14_090", "PS14_050"))
 
-acg_dat_tf <- subset(acg_dat_tf, study_code != c("PS14_090", "PS14_050"))
-
+#save database with tissue fraction
+write.csv(acg_dat_tf, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n112_tissuefraction.csv", row.names = FALSE)
 
 #check correlation between tissue fraction and age
 acg_TisFrac_age <- lmer(TissueFraction_GMWM ~ mri_age_y + (1 | subj_id), data=acg_dat_tf, REML=FALSE)
@@ -682,6 +667,9 @@ summary(acg_cre_age)
 acg_cre_age_tf <- lmer(Cre_PCr_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=acg_dat_tf, REML=FALSE)
 summary(acg_cre_age_tf)
 
+#compare models
+anova(acg_cre_age, acg_cre_age_tf)
+
 #Cho
 #basic age model
 acg_cho_age <- lmer(Cho_GPC_PCh_conc_molal ~ mri_age_y + (1 | subj_id), data=acg_dat_tf, REML=FALSE)
@@ -703,6 +691,9 @@ summary(acg_ins_age)
 acg_ins_age_tf <- lmer(Ins_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=acg_dat_tf, REML=FALSE)
 summary(acg_ins_age_tf)
 
+#compare models
+anova(acg_ins_age,acg_ins_age_tf) #not sig.
+
 #Glx
 #basic age model
 acg_glx_age <- lmer(Glu_Gln_conc_molal ~ mri_age_y + (1 | subj_id), data=acg_dat_tf, REML=FALSE)
@@ -713,14 +704,13 @@ acg_glx_age_tf <- lmer(Glu_Gln_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1
 summary(acg_glx_age_tf)
 
 
-
 ```
 
 LAG Tissue Fraction models
 ```{r}
 #LAG
 #read in data
-lag_dat<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n320.csv")
+lag_dat<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n319.csv")
 
 #create tissue fraction variable
 lag_dat$TissueFraction_GMWM <- lag_dat$fGM/(lag_dat$fGM + lag_dat$fWM)
@@ -731,7 +721,7 @@ plot_LAG_tissuefraction+ geom_density() #normal
 plot_LAG_tissuefraction + geom_boxplot() #6 potential outliers
 rosnerTest(lag_dat$TissueFraction_GMWM, k = 6) #no significant outliers
 
-write.csv(lag_dat, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n320_tissuefraction.csv")
+write.csv(lag_dat, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n319_tissuefraction.csv")
 
 #check correlation between tissue fraction and age
 lag_TisFrac_age <- lmer(TissueFraction_GMWM ~ mri_age_y + (1 | subj_id), data=lag_dat, REML=FALSE)
@@ -739,7 +729,7 @@ summary(lag_TisFrac_age)
 #tissue fraction is significantly negatively associated with age
 
 #in a simple correlation test
-cor.test(lag_dat$mri_age_y, lag_dat$TissueFraction_GMWM) # also significant: r = -.37
+cor.test(lag_dat$mri_age_y, lag_dat$TissueFraction_GMWM) #r = -.38
 
 
 #Add tissue fraction as a fixed effect in LAG models
@@ -778,7 +768,7 @@ lag_cre_age_TisFrac<- lmer(Cre_PCr_conc_molal ~ mri_age_y + TissueFraction_GMWM 
 summary(lag_cre_age_TisFrac)
 
 #compare model fit
-anova(lag_cre_age, lag_cre_age_TisFrac) #sig.
+anova(lag_cre_age, lag_cre_age_TisFrac) #sig. best model is lag_cre_age_TisFrac
 
 #add interaction
 lag_cre_age_TisFrac_int<- lmer(Cre_PCr_conc_molal ~ mri_age_y * TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
@@ -809,7 +799,7 @@ anova(lag_cho_age, lag_cho_age_TisFrac) #sig
 
 #add interaction
 lag_cho_age_TisFrac_int<- lmer(Cho_GPC_PCh_conc_molal ~ mri_age_y * TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
-summary(lag_cho_age_TisFrac_int) #interaction is sig. (p=.046)
+summary(lag_cho_age_TisFrac_int) #interaction is sig. (p=.047)
 
 #compare model fit
 anova(lag_cho_age_TisFrac, lag_cho_age_TisFrac_int) #sig. (p<.046)
@@ -1000,8 +990,6 @@ summary(lag_glx_age_TisFrac_quad) #no sig. effects
 #compare models
 anova(lag_glx_age_TisFrac, lag_glx_age_TisFrac_quad)  #significant 
 
-
-
 ```
 
 
@@ -1029,6 +1017,8 @@ Estimate metabolite residuals using remef
 Include individual slopes (estimated via linear models by subject) using geom_smooth()
 Include overall fit line using geom_abline
 ```{r}
+
+
 #LAG - NAA
 
 #pull fixed effects for overall model
@@ -1044,7 +1034,7 @@ lag_naa_partial <- remef(lag_naa_age_TisFrac, fix = "TissueFraction_GMWM") #does
 #create plot to show NAA ~ age while controlling for Tissue Fraction
 plot_lag_naa_age_tf<-ggplot(lag_dat_plot, aes(x=mri_age_y, y=lag_naa_partial, na.exclude = TRUE, color=as.factor(female))) +
   geom_point() +
-  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_naa_partial, group=as.factor(subj_id)), size = .2, show.legend = FALSE) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_naa_partial, group=as.factor(subj_id)), size = .3, show.legend = FALSE) +
   labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "tNAA | Tissue Fraction") +
   scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
   geom_abline(aes(intercept = fixef.lag_naa_TisFrac[[1]], slope = fixef.lag_naa_TisFrac[[2]])) + 
@@ -1067,7 +1057,7 @@ lag_cre_partial <- remef(lag_cre_age_TisFrac, fix = "TissueFraction_GMWM") #does
 
 plot_lag_cre_age_tf<-ggplot(lag_dat_plot_Cre, aes(x=mri_age_y, y=lag_cre_partial, na.exclude = TRUE, color=as.factor(female))) +
   geom_point() +
-  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_cre_partial, group=as.factor(subj_id)), size = .2, show.legend = FALSE) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_cre_partial, group=as.factor(subj_id)), size = .3, show.legend = FALSE) +
   labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "tCre | Tissue Fraction") +
   scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
   geom_abline(aes(intercept = fixef.lag_cre_age_TisFrac[[1]], slope = fixef.lag_cre_age_TisFrac[[2]])) + 
@@ -1077,9 +1067,10 @@ plot_lag_cre_age_tf
 
 
 #LAG - Cho
+
 Cho_age_tf_int_plot <- interact_plot(lag_cho_age_TisFrac_int, pred = mri_age_y, modx = TissueFraction_GMWM, data=lag_dat, plot.points=TRUE, legend.main="Tissue Fraction GM/(GM+WM)", modx.labels=c(".535 (-1 SD)", ".642 (Mean)", ".750 (+1 SD)")) +
   labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "tCho (molal)") + 
-  scale_color_viridis(option="mako", name="Tissue Fraction GM/(GM+WM)", begin= .32, end=1) +
+  scale_color_viridis(option="mako", name="Tissue Fraction GM/(GM+WM)", begin= .32, end=.85) +
   theme_classic()
 Cho_age_tf_int_plot
   ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cho_age_tf_int.png")
@@ -1100,8 +1091,8 @@ lag_ins_partial <- remef(lag_ins_age_TisFrac_int, fix = c("TissueFraction_GMWM",
 #plot main effect of age controlling for tissue fraction and age x tissue fraction interaction
 plot_lag_ins_age_tf<-ggplot(lag_dat_plot_Ins, aes(x=mri_age_y, y=lag_ins_partial, na.exclude = TRUE, color=as.factor(female))) +
   geom_point() +
-  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_ins_partial, group=as.factor(subj_id)), size = .2, show.legend = FALSE) +
-  labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "Ins | Tissue Fraction") +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_ins_partial, group=as.factor(subj_id)), size = .3, show.legend = FALSE) +
+  labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "Ins | Tissue Fraction and Tissue Fraction:Age") +
   scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
   geom_abline(aes(intercept = fixef.lag_ins_age_TisFrac_int[[1]], slope = fixef.lag_ins_age_TisFrac_int[[2]])) + 
   theme_classic()
@@ -1111,12 +1102,81 @@ ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/resul
   
 #age x tissue fraction interaction plot
 Ins_age_tf_int_plot <- interact_plot(lag_ins_age_TisFrac_int, pred = mri_age_y, modx = TissueFraction_GMWM, data=lag_dat, plot.points=TRUE, legend.main="Tissue Fraction GM/(GM+WM)", modx.labels=c(".535 (-1 SD)", ".642 (Mean)", ".750 (+1 SD)")) +
-  labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "tCre (molal)") +
-  scale_color_viridis(option="mako", name="Tissue Fraction GM/(GM+WM)", begin= .32, end=1) +
+  labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "Ins (molal)") +
+  scale_color_viridis(option="mako", name="Tissue Fraction GM/(GM+WM)", begin= .32, end=.85) +
   theme_classic()
 Ins_age_tf_int_plot #only the slope for the lowest range of tissue fraction values (-1 SD) is significant 
 ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_ins_age_tf_int.png")
 
 
 ```
+##Edit plots for manuscript
+rescale plots to consistent scale, adjust legends, remove individual titles, join plots as panels in figures
+*Run tissue fractions models and "Plot results of models including tissue fraction" chunks before running this chunk
+```{r}
+#read data LAG
+lag_dat<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n319_tissuefraction.csv")
 
+#LAG - NAA
+#Main effect plots for LAG
+#rescale plot to show NAA ~ age while controlling for Tissue Fraction
+LAG_NAA<-plot_lag_naa_age_tf + 
+  scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
+  scale_y_continuous(limits=c(1,18), breaks=seq(1,18,1)) +
+  theme(legend.position='none') +
+  labs(title=NULL)
+LAG_NAA
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_naa_age_partialef_rescale.png")
+
+
+#LAG - Cre
+LAG_Cre<-plot_lag_cre_age_tf +
+  scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
+  scale_y_continuous(limits=c(1,18), breaks=seq(1,18,1)) +
+  theme(legend.position='none') +
+  labs(title=NULL)
+LAG_Cre  
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cre_age_partialef_rescale.png")
+
+#LAG - Ins Main effect of age 
+LAG_Ins_main<-plot_lag_ins_age_tf +
+  scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
+  scale_y_continuous(limits=c(1,18), breaks=seq(1,18,1)) +
+  theme(legend.position=c(.8,.9), legend.background = element_rect(fill="transparent", linetype = NULL)) +
+  labs(title=NULL)
+LAG_Ins_main
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_ins_age_tf_maineffect_rescale.png")
+
+#Join LAG main effects plots in a single figure
+library(patchwork)
+LAG_fig<-LAG_NAA + LAG_Cre + LAG_Ins_main + plot_layout(nrow=1) + plot_annotation(title = 'Relationships between age and metabolite concentrations in left temporo-parietal region')
+LAG_fig
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/LAG_maineffects_fig_grid_viridis.png", LAG_fig, width = 3000, height = 1500, units = "px")
+
+#interaction plots
+#LAG - Cho
+LAG_Cho_int<-Cho_age_tf_int_plot +
+  scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
+  scale_y_continuous(limits=c(0,4), breaks=seq(1,4,1)) +
+  labs(title=NULL)
+LAG_Cho_int
+  ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cho_age_tf_int_rescale.png")
+
+
+#LAG - Ins age x tissue fraction interaction plot
+#how to indicate in plot that only the -1 SD line is significant?
+LAG_Ins_int<-Ins_age_tf_int_plot +
+  scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
+  scale_y_continuous(limits=c(0,12), breaks=seq(1,12,1)) +
+  labs(title=NULL)
+LAG_Ins_int
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_ins_age_tf_int_rescale.png")
+
+#Join interaction plots into a single figure
+LAG_int_fig<- LAG_Cho_int + LAG_Ins_int + plot_layout(nrow=1, guides = 'collect') + plot_annotation(title='Age x tissue fraction interactions in left temporo-parietal region')
+LAG_int_fig
+
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/LAG_interactions_fig_grid_viridis.png", LAG_int_fig, width = 3000, height = 1500, units = "px")
+
+
+```
