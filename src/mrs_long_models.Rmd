@@ -705,6 +705,59 @@ summary(acg_glx_age_tf)
 
 
 ```
+##Plot ACG results with 2 tissue fraction outlier subjects excluded
+Plotting simple age models run with N=112 subjects
+
+```{r}
+#NAA
+#pull fixed effects
+fixef.acg_naa<-fixef(acg_naa_age)
+
+plot_acg_naa_age<-ggplot(acg_dat_tf, aes(x=mri_age_y, y=NAA_conc_molal,color=as.factor(female))) +
+  geom_point() +
+  labs(title = "Anterior Cingulate", x = "Age (years)", y = "tNAA (molal)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=NAA_conc_molal, group=as.factor(subj_id)), size = .3, show.legend = FALSE) +
+  geom_abline(aes(intercept = fixef.acg_naa[[1]], slope= fixef.acg_naa[[2]])) + 
+  theme_classic()
+plot_acg_naa_age
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_naa_age_viridis_n112.png")
+
+
+#Cho
+#pull intercept and slope from model for regression line
+fixef.acg_cho<-fixef(acg_cho_age)
+
+#plot
+plot_acg_cho_age<-ggplot(acg_dat_tf, aes(x=mri_age_y, y=Cho_GPC_PCh_conc_molal,color=as.factor(female))) + 
+  geom_point() +
+  labs(title = "Anterior Cingulate", x = "Age (years)", y = "tCho (molal)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=Cho_GPC_PCh_conc_molal, group=as.factor(subj_id)), size = .3, show.legend = FALSE) +
+  geom_abline(aes(intercept = fixef.acg_cho[[1]], slope= fixef.acg_cho[[2]])) + 
+  theme_classic()
+plot_acg_cho_age
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_cho_age_viridis_n112.png")
+
+#Ins
+#pull intercept and slope from model for regression line
+fixef.acg_ins<-fixef(acg_ins_age)
+
+#plot
+plot_acg_ins_age<-ggplot(acg_dat_tf, aes(x=mri_age_y, y=Ins_conc_molal,color=as.factor(female))) + 
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=Ins_conc_molal, group=as.factor(subj_id)), size = .3, show.legend = FALSE) +
+  labs(title = "Anterior Cingulate", x = "Age (years)", y = "Ins (molal)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_abline(aes(intercept = fixef.acg_ins[[1]], slope= fixef.acg_ins[[2]])) + 
+  theme_classic()
+plot_acg_ins_age
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_ins_age_viridis_n112.png")
+
+
+```
+
+
 
 LAG Tissue Fraction models
 ```{r}
@@ -1017,8 +1070,6 @@ Estimate metabolite residuals using remef
 Include individual slopes (estimated via linear models by subject) using geom_smooth()
 Include overall fit line using geom_abline
 ```{r}
-
-
 #LAG - NAA
 
 #pull fixed effects for overall model
@@ -1114,6 +1165,39 @@ ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/resul
 rescale plots to consistent scale, adjust legends, remove individual titles, join plots as panels in figures
 *Run tissue fractions models and "Plot results of models including tissue fraction" chunks before running this chunk
 ```{r}
+#ACG plots - main effects only
+ACG_NAA<-plot_acg_naa_age +
+  scale_x_continuous(limits=c(2,8), breaks=seq(2,8,1)) +
+  scale_y_continuous(limits=c(1,19), breaks=seq(1,19,1)) +
+  theme(legend.position='none') +
+  labs(title=NULL)
+ACG_NAA
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_naa_age_n112_rescale.png")
+
+
+ACG_Cho<-plot_acg_cho_age +
+  scale_x_continuous(limits=c(2,8), breaks=seq(2,8,1)) +
+  scale_y_continuous(limits=c(1,19), breaks=seq(1,19,1)) +
+  theme(legend.position='none') +
+  labs(title=NULL)
+ACG_Cho
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_cho_age_n112_rescale.png")
+
+ACG_Ins<-plot_acg_ins_age +
+  scale_x_continuous(limits=c(2,8), breaks=seq(2,8,1)) +
+  scale_y_continuous(limits=c(1,19), breaks=seq(1,19,1)) +
+  theme(legend.position=c(.8,.9), legend.background = element_rect(fill="transparent", linetype = NULL)) +
+  labs(title=NULL)
+ACG_Ins
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_ins_age_n112_rescale.png")
+
+#Join ACG main effects plots in a single figure
+library(patchwork)
+ACG_fig<-ACG_NAA + ACG_Cho + ACG_Ins + plot_layout(nrow=1) + plot_annotation(title = 'Relationships between age and metabolite concentrations in anterior cingulate cortex')
+ACG_fig
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/ACG_maineffects_fig_grid_viridis.png", ACG_fig, width = 3000, height = 1500, units = "px")
+
+
 #read data LAG
 lag_dat<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n319_tissuefraction.csv")
 
