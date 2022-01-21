@@ -161,6 +161,19 @@ sum(acg_unique_subs$female)
 
 describe(acg_dat)
 
+#re-run descriptives afer excluding 2 subjects for poor coregistration
+acg_dat_tf<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n112_tissuefraction.csv")
+#convert subj_id variable to "character" type for later merging
+acg_dat_tf$subj_id <- as.character(acg_dat_tf$subj_id)
+
+acg_sub_sex <- acg_dat_tf %>%
+  dplyr::select(subj_id, female)
+acg_unique_subs<-unique(acg_sub_sex)
+length(acg_unique_subs$subj_id)
+sum(acg_unique_subs$female)
+
+describe(acg_dat_tf)
+
 #LAG - count individual subject N and N of females
 lag_sub_sex <- lag_dat %>%
   dplyr::select(subj_id, female)
@@ -171,7 +184,7 @@ sum(lag_unique_subs$female)
 describe(lag_dat)
 
 #Calculate total Ns from both datasets combined
-all_dat<-bind_rows(acg_dat, lag_dat)
+all_dat<-bind_rows(acg_dat_tf, lag_dat)
 length(unique(all_dat$File_ID))
 length(unique(all_dat$subj_id))
 all_sub_sex <- all_dat %>%
@@ -1049,20 +1062,34 @@ anova(lag_glx_age_TisFrac, lag_glx_age_TisFrac_quad)  #significant
 ##Print model summaries 
 Print formatted model summaries and tables using report and sjplot package
 ```{r}
-library(report)
-#library(sjplot) #try for pretty summary tables
+library(sjPlot) #for pretty summary tables
+library(report) #for text summaries
 
-summary(lag_naa_age_TisFrac)
+#create html summary table for sig. models ACG
+acg_summary_table_sig<-tab_model(acg_naa_age, acg_cho_age, acg_ins_age, dv.labels = c("tNAA (molal)", "tCho (molal)", "Ins (molal)"), pred.labels = c("(Intercept)", "Age (years)"))
+acg_summary_table_sig #opens in Rstudio viewer, can open from there to web browser and save as PDF or whatever
+
+#create html summary table for all models ACG
+acg_summary_table_all<-tab_model(acg_naa_age, acg_cre_age, acg_cho_age, acg_ins_age, acg_glx_age, dv.labels = c("tNAA (molal)", "tCre (molal)", "tCho (molal)", "Ins (molal)", "Glx (molal)"), pred.labels = c("(Intercept)", "Age (years)"))
+acg_summary_table_all #opens in Rstudio viewer, can open from there to web browser and save as PDF or whatever
+
+#output text summaries for sig. ACG models
+report(acg_naa_age)
+report(acg_cho_age)
+
+
+#create html summary table for sig. models LAG
+lag_summary_table_sig<-tab_model(lag_naa_age_TisFrac, lag_cre_age_TisFrac, lag_cho_age_TisFrac_int, lag_ins_age_TisFrac_int, dv.labels = c("tNAA (molal)", "tCre (molal)", "tCho (molal)", "Ins (molal)"), pred.labels = c("(Intercept)", "Age (years)", "Tissue Fraction GM/(WM+GM)", "Age:Tissue Fraction"))
+lag_summary_table_sig
+
+#create html summary table for all models LAG
+lag_summary_table_all<-tab_model(lag_naa_age_TisFrac, lag_cre_age_TisFrac, lag_cho_age_TisFrac_int, lag_ins_age_TisFrac_int, lag_glx_age_TisFrac_quad, dv.labels = c("tNAA (molal)", "tCre (molal)", "tCho (molal)", "Ins (molal)", "Glx (molal)"), pred.labels = c("(Intercept)", "Age (years)", "Tissue Fraction GM/(WM+GM)", "Age:Tissue Fraction", "Age^2", "Age:Age^2", "Age^2:Tissue Fraction", "Age:Age^2:Tissue Fraction"))
+lag_summary_table_all
+
 report(lag_naa_age_TisFrac)
-report_table(lag_naa_age_TisFrac)
-
-
-summary(lag_cre_age_TisFrac)
 report(lag_cre_age_TisFrac)
-
-summary(lag_cho_age_TisFrac_int)
 report(lag_cho_age_TisFrac_int)
-
+report(lag_ins_age_TisFrac_int)
 
 ```
 ##Plot results of models including tissue fraction
@@ -1262,5 +1289,39 @@ LAG_int_fig
 
 ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/LAG_interactions_fig_grid_viridis.png", LAG_int_fig, width = 3000, height = 1500, units = "px")
 
+```
+##FDR Correction for multiple comparisons: final models
+run FDR correction (Benjamini & Hochberg method) on final models (simple growth models for ACG, tissue fraction models for LAG)
+Following Reynolds et al. 2019 NeuroImage - correct for multiple comparisons within a given factor (e.g. age) across models (2 regions x 5 metabolites = 10 comparisons)
+```{r}
+library(broom)
+#list models (voxel/metabolite pair)
+models<- c("acg_naa_age", "acg_cre_age", "acg_cho_age", "acg_ins_age", "acg_glx_age", "lag_naa_age_TisFrac", "lag_cre_age_TisFrac", "lag_cho_age_TisFrac_int", "lag_ins_age_TisFrac_int", "lag_glx_age_TisFrac_quad")
+
+#list p-values for age in each model, matching order of models (tried to do this with sapply function but couldn't get it to work)
+p_age<-c(coef(summary(acg_naa_age))[2,5], coef(summary(acg_cre_age))[2,5], coef(summary(acg_cho_age))[2,5], coef(summary(acg_ins_age))[2,5], coef(summary(acg_glx_age))[2,5], coef(summary(lag_naa_age_TisFrac))[2,5], coef(summary(lag_cre_age_TisFrac))[2,5], coef(summary(lag_cho_age_TisFrac_int))[2,5], coef(summary(lag_ins_age_TisFrac_int))[2,5], coef(summary(lag_glx_age_TisFrac_quad))[2,5])
+
+fdr_table<-data.frame(models, p_age)
+
+fdr_table$p_fdr<-p.adjust(p_age, method = "fdr", n= length(p_age))
+fdr_table
+
+write.csv(fdr_table, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/fdr_table_age.csv")
+
+
+#run FDR correction on 3 models that included interactions (LAG: Cho, Ins, Glx)
+
+models_b<-c("lag_cho_age_TisFrac_int", "lag_ins_age_TisFrac_int", "lag_glx_age_TisFrac_quad")
+p_int<-c(coef(summary(lag_cho_age_TisFrac_int))[4,5], coef(summary(lag_ins_age_TisFrac_int))[4,5], coef(summary(lag_glx_age_TisFrac_quad))[5,5])
+
+fdr_table_b<-data.frame(models_b, p_int)
+fdr_table_b$p_fdr<-p.adjust(p_int, method = "fdr", n= length(p_int))
+fdr_table_b
+write.csv(fdr_table_b, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/fdr_table_int.csv")
+
 
 ```
+
+
+
+
