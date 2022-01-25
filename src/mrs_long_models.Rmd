@@ -32,12 +32,12 @@ acg_LCM_corr <- bind_rows(acg_batch1, acg_batch2)
 anyDuplicated(acg_LCM_corr$File_ID) #check for duplicated values
 acg_LCM_corr<-unique(acg_LCM_corr) #remove duplicate rows
 acg_LCM_corr["4", "Cho_GPC_PCh_conc_molar"]<-NA #Cho conc invalid for PS10008_PS14_046_2386 due to spike in spectrum
-acg_LCM_corr["4", "Cho_GPC_PCh_conc_molal"]<-NA #Cho conc invalid for PS10008_PS14_046_2386 due to spike in spectrum
+acg_LCM_corr["4", "Ins_conc_molal"]<-NA #Cho conc invalid for PS10008_PS14_046_2386 due to spike in spectrum
 
 write.csv(acg_LCM_corr, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/ACG_LCM_CorrectedTable_19-01-2021_all.csv", row.names = FALSE)
 
 acg_molal <- acg_LCM_corr %>%
-  dplyr::select(File_ID, fGM, fWM, fCSF, NAA_conc_molal, Cre_PCr_conc_molal, Cho_GPC_PCh_conc_molal, Ins_conc_molal, Glu_conc_molal, Glu_Gln_conc_molal)
+  dplyr::select(File_ID, fGM, fWM, fCSF, NAA_conc_molal, Cre_PCr_conc_molal, Ins_conc_molal, Ins_conc_molal, Glu_conc_molal, Glu_Gln_conc_molal)
 
 acg_demo <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_analysis_subs.csv")
 
@@ -965,6 +965,8 @@ Cho_age_tf_int_plot
 #linearity check
 Cho_age_tf_int_plot_lin <- interact_plot(lag_cho_age_TisFrac_int, pred = mri_age_y, modx = TissueFraction_GMWM, modx.values="terciles", plot.points=TRUE, linearity.check=TRUE)
 Cho_age_tf_int_plot_lin
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cho_age_tf_int_linearityplot.png", width = 2000, height = 1500, units = "px")
+
 #seems to be some non-linear effects, try adding quadratic term
 
 #LAG Ins: age x tissue fraction interaction
@@ -984,6 +986,8 @@ Ins_age_tf_int_plot
 #linearity check
 Ins_age_tf_int_plot_lin <- interact_plot(lag_ins_age_TisFrac_int, pred = mri_age_y, modx = TissueFraction_GMWM, modx.values="terciles", plot.points=TRUE, linearity.check=TRUE)
 Ins_age_tf_int_plot_lin
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_ins_age_tf_int_linearityplot.png", , width = 2000, height = 1500, units = "px")
+
 #seems to be some non-linear effects - try adding quadratic term
 
 
@@ -1091,6 +1095,12 @@ report(lag_cre_age_TisFrac)
 report(lag_cho_age_TisFrac_int)
 report(lag_ins_age_TisFrac_int)
 
+#Glx models - unpacking for interpretation
+glx_tf_sum<-tab_model(lag_glx_age_TisFrac)
+glx_tf_sum
+
+glx_tf_quad_sum<-tab_model(lag_glx_age_TisFrac_quad)
+glx_tf_quad_sum
 ```
 ##Plot results of models including tissue fraction
 Estimate metabolite residuals using remef
@@ -1186,8 +1196,332 @@ Ins_age_tf_int_plot <- interact_plot(lag_ins_age_TisFrac_int, pred = mri_age_y, 
 Ins_age_tf_int_plot #only the slope for the lowest range of tissue fraction values (-1 SD) is significant 
 ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_ins_age_tf_int.png")
 
+#Glx - simple age + tf model
+#pull fixed effects for overall model
+fixef.lag_glx_TisFrac<-fixef(lag_glx_age_TisFrac)
+
+#subset dataframe with only subjects included in Glx analysis
+lag_glx_plot<- lag_dat %>% 
+  filter(! is.na(Glu_Gln_conc_molal))
+
+#calculate partial effect of age on Glx (remove effect of tissue fraction)
+lag_glx_partial <- remef(lag_glx_age_TisFrac, fix = "TissueFraction_GMWM") #does NOT remove random effects variance
+
+#create plot to show Glx ~ age while controlling for Tissue Fraction
+plot_lag_glx_age_tf<-ggplot(lag_glx_plot, aes(x=mri_age_y, y=lag_glx_partial, na.exclude = TRUE, color=as.factor(female))) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_glx_partial, group=as.factor(subj_id)), size = .3, show.legend = FALSE) +
+  labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "Glx | Tissue Fraction") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_abline(aes(intercept = fixef.lag_glx_TisFrac[[1]], slope = fixef.lag_glx_TisFrac[[2]])) + 
+  theme_classic()
+plot_lag_glx_age_tf
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_glx_age_partialef.png")
+
+#Plot Glx by Tissue fraction controlling for age
+lag_glx_partial_tf <- remef(lag_glx_age_TisFrac, fix = "mri_age_y") #does NOT remove random effects variance
+lag_glx_subset <- lag_glx_plot %>% 
+  filter(! is.na(Glu_Gln_conc_molal))
+plot_lag_glx_tf_partAge<-ggplot(lag_glx_plot, aes(x=TissueFraction_GMWM, y=lag_glx_partial_tf, na.exclude = TRUE, color=as.factor(female))) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, aes(x=TissueFraction_GMWM, y=lag_glx_partial_tf, group=as.factor(subj_id)), size = .3, show.legend = FALSE) +
+  labs(title = "Left Temporo-Parietal", x = "Tissue Fraction GM/(GM+WM)", y = "Glx | Age") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_abline(aes(intercept = fixef.lag_glx_TisFrac[[1]], slope = fixef.lag_glx_TisFrac[[3]])) + 
+  theme_classic()
+plot_lag_glx_tf_partAge
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_glx_tf_partialef.png")
+
+#plot a subset of individuals' data to see whether quadratic fit makes sense to include in model
+#create random subset from individuals with >=3 time points
+#list all subjects with >2 time points
+lag_glx_long<-group_by(lag_glx_plot, subj_id) %>%
+  summarise(n=n()) %>%
+  filter(n > 2)
+
+#randomly select 36 of those subjects
+set.seed(56789)
+lag_glx_randsample<- sample_n(lag_glx_long, 36)
+
+#create data subset with those 30 subjects for plotting
+lag_glx_plot36 <- lag_glx_plot %>%
+                    filter(subj_id %in% lag_glx_randsample$subj_id)
+
+#plot individual subject data by faceting
+plot_lag_glx_indiv<-ggplot(lag_glx_plot36, aes(x=mri_age_y, y=Glu_Gln_conc_molal, na.exclude = TRUE, color=as.factor(female))) +
+  geom_point() +
+  facet_wrap(~subj_id) +
+  geom_smooth() +
+  labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "Glx") +
+  scale_y_continuous(limits = c(5,30), breaks = seq(5,30,5)) +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  theme_classic()
+plot_lag_glx_indiv
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_glx_individ_n36.png", plot = plot_lag_glx_indiv)
 
 ```
+#Plotting tissue fraction effects in LAG
+```{r}
+#read in data with tissue fraction
+lag_dat<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n319_tissuefraction.csv")
+
+#LAG - NAA
+#pull fixed effects for overall model
+fixef.lag_naa_TisFrac<-fixef(lag_naa_age_TisFrac)
+
+#subset dataframe with only subjects included in NAA analysis
+lag_dat_plot<- lag_dat %>% 
+  filter(! is.na(NAA_conc_molal))
+
+#calculate partial effect tissue fraction on tNAA (remove effect of age)
+lag_naa_tf_partial <- remef(lag_naa_age_TisFrac, fix = "mri_age_y") #does NOT remove random effects variance
+
+#create plot to show NAA ~ age while controlling for Tissue Fraction
+plot_lag_naa_tf<-ggplot(lag_dat_plot, aes(x=TissueFraction_GMWM, y=lag_naa_tf_partial, na.exclude = TRUE, color=as.factor(female))) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, aes(x=TissueFraction_GMWM, y=lag_naa_tf_partial, group=as.factor(subj_id)), size = .3, show.legend = FALSE) +
+  labs(title = "Left Temporo-Parietal", x = "Tissue Fraction GM/(GM+WM)", y = "tNAA | Age") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  scale_y_continuous(limits = c(1,18), breaks = seq(1,18,1)) +
+  geom_abline(aes(intercept = fixef.lag_naa_TisFrac[[1]], slope = fixef.lag_naa_TisFrac[[3]])) + 
+  theme_classic()
+plot_lag_naa_tf
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_naa_tf_partialef.png")
+
+
+#LAG - Cre
+
+#pull fixed effects for overall model
+fixef.lag_cre_age_TisFrac<-fixef(lag_cre_age_TisFrac)
+
+#subset dataframe with only subjects included in NAA analysis
+lag_dat_plot_Cre<- lag_dat %>% 
+  filter(! is.na(Cre_PCr_conc_molal))
+
+#calculate partial effect of age on Cre (remove effect of tissue fraction)
+lag_cre_tf_partial <- remef(lag_cre_age_TisFrac, fix = "mri_age_y") #does NOT remove random effects variance
+
+plot_lag_cre_age_tf<-ggplot(lag_dat_plot_Cre, aes(x=TissueFraction_GMWM, y=lag_cre_tf_partial, na.exclude = TRUE, color=as.factor(female))) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, aes(x=TissueFraction_GMWM, y=lag_cre_tf_partial, group=as.factor(subj_id)), size = .3, show.legend = FALSE) +
+  labs(title = "Left Temporo-Parietal", x = "Tissue Fraction GM/(GM+WM)", y = "tCre | Age") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  scale_y_continuous(limits = c(1,18), breaks = seq(1,18,1)) +
+  geom_abline(aes(intercept = fixef.lag_cre_age_TisFrac[[1]], slope = fixef.lag_cre_age_TisFrac[[3]])) + 
+  theme_classic()
+plot_lag_cre_age_tf
+  ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cre_tf_partialef.png")
+
+#LAG - Cho
+
+#pull fixed effects for overall model
+fixef.lag_cho_age_TisFrac_int<-fixef(lag_cho_age_TisFrac_int)
+
+#subset dataframe with only subjects included in NAA analysis
+lag_dat_plot_cho<- lag_dat %>% 
+  filter(! is.na(Cho_GPC_PCh_conc_molal))
+
+#calculate partial effect of age on Cre (remove effect of tissue fraction)
+lag_cho_tf_partial <- remef(lag_cho_age_TisFrac_int, fix = c("mri_age_y", "mri_age_y:TissueFraction_GMWM")) #does NOT remove random effects variance
+
+plot_lag_cho_tf<-ggplot(lag_dat_plot_cho, aes(x=TissueFraction_GMWM, y=lag_cho_tf_partial, na.exclude = TRUE, color=as.factor(female))) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, aes(x=TissueFraction_GMWM, y=lag_cho_tf_partial, group=as.factor(subj_id)), size = .3, show.legend = FALSE) +
+  labs(title = "Left Temporo-Parietal", x = "Tissue Fraction GM/(GM+WM)", y = "tCho | Age + Age:Tissue Fraction") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  scale_y_continuous(limits = c(1,18), breaks = seq(1,18,1)) +
+  geom_abline(aes(intercept = fixef.lag_cho_age_TisFrac_int[[1]], slope = fixef.lag_cho_age_TisFrac_int[[3]])) + 
+  theme_classic()
+plot_lag_cho_tf
+  ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cho_tf_partialef.png")
+
+#LAG - Ins
+#Main effect of age 
+ #pull fixed effects for overall model
+fixef.lag_ins_age_TisFrac_int<-fixef(lag_ins_age_TisFrac_int)
+
+#subset dataframe with only subjects included in NAA analysis
+lag_dat_plot_Ins<- lag_dat %>% 
+  filter(! is.na(Ins_conc_molal))
+
+#calculate partial effect of age on Ins (remove effect of tissue fraction)
+lag_ins_tf_partial <- remef(lag_ins_age_TisFrac_int, fix = c("mri_age_y","mri_age_y:TissueFraction_GMWM")) #does NOT remove random effects variance
+
+#plot main effect of age controlling for tissue fraction and age x tissue fraction interaction
+plot_lag_ins_tf<-ggplot(lag_dat_plot_Ins, aes(x=TissueFraction_GMWM, y=lag_ins_tf_partial, na.exclude = TRUE, color=as.factor(female))) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, aes(x=TissueFraction_GMWM, y=lag_ins_tf_partial, group=as.factor(subj_id)), size = .3, show.legend = FALSE) +
+  labs(title = "Left Temporo-Parietal", x = "Tissue Fraction GM/(GM+WM)", y = "Ins | Age and Age:Tissue Fraction") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  scale_y_continuous(limits = c(1,18), breaks = seq(1,18,1)) +
+  geom_abline(aes(intercept = fixef.lag_ins_age_TisFrac_int[[1]], slope = fixef.lag_ins_age_TisFrac_int[[3]])) + 
+  theme_classic()
+plot_lag_ins_tf
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_ins_age_tf_maineffect.png")
+```
+
+##more descriptive plots to explore age x tissue fraction interactions
+```{r}
+#plot tissue fraction by age
+fixef.lag_TisFrac_age<-fixef(lag_TisFrac_age)
+
+plot_lag_age_tf<-ggplot(lag_dat, aes(x=mri_age_y, y=TissueFraction_GMWM, na.exclude = TRUE)) +
+  geom_point(aes(color=as.factor(female))) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=TissueFraction_GMWM, color=as.factor(female), group=as.factor(subj_id)), size = .3, show.legend = FALSE) +
+  labs(title = "Full Sample (n=319)", x = "Age (years)", y = "Tissue Fraction GM/(GM+WM)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
+  scale_y_continuous(limits=c(0,1), breaks=seq(0,1,.1)) +
+  geom_abline(aes(intercept = fixef.lag_TisFrac_age[[1]], slope = fixef.lag_TisFrac_age[[2]])) + 
+  theme_classic()
+plot_lag_age_tf
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_age_tf.png", plot=plot_lag_age_tf)
+
+#split dataset into age groups: 2-5.9, 6-12
+lag_dat_young<-lag_dat %>% filter(mri_age_y< 6)
+lag_dat_old<-lag_dat %>% filter(mri_age_y >= 6)
+
+#model tissue fraction by age in young group
+lag_TisFrac_age_young<-lmer(TissueFraction_GMWM ~ mri_age_y + (1 | subj_id), data=lag_dat_young, REML=FALSE)
+summary(lag_TisFrac_age_young)
+
+fixef.lag_TisFrac_age_young<-fixef(lag_TisFrac_age_young)
+
+plot_lag_age_tf_young<-ggplot(lag_dat_young, aes(x=mri_age_y, y=TissueFraction_GMWM, na.exclude = TRUE)) +
+  geom_point(aes(color=as.factor(female))) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=TissueFraction_GMWM, color=as.factor(female), group=as.factor(subj_id)), size = .3, show.legend = FALSE) +
+  labs(title = "Ages 2-5.9 (n=185)", x = "Age (years)", y = "Tissue Fraction GM/(GM+WM)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  scale_x_continuous(limits=c(2,6), breaks=seq(2,6,1)) +
+  scale_y_continuous(limits=c(0,1), breaks=seq(0,1,.1)) +
+  geom_abline(aes(intercept = fixef.lag_TisFrac_age_young[[1]], slope = fixef.lag_TisFrac_age_young[[2]])) + 
+  theme_classic()
+plot_lag_age_tf_young
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_age_tf_young.png", plot=plot_lag_age_tf_young)
+
+#model tissue fraction by age in old group
+lag_TisFrac_age_old<-lmer(TissueFraction_GMWM ~ mri_age_y + (1 | subj_id), data=lag_dat_old, REML=FALSE)
+summary(lag_TisFrac_age_old)
+
+fixef.lag_TisFrac_age_old<-fixef(lag_TisFrac_age_old)
+
+plot_lag_age_tf_old<-ggplot(lag_dat_old, aes(x=mri_age_y, y=TissueFraction_GMWM, na.exclude = TRUE)) +
+  geom_point(aes(color=as.factor(female))) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=TissueFraction_GMWM, color=as.factor(female), group=as.factor(subj_id)), size = .3, show.legend = FALSE) +
+  labs(title = "Ages 6-11, n=134", x = "Age (years)", y = "Tissue Fraction GM/(GM+WM)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  scale_x_continuous(limits=c(6,12), breaks=seq(6,12,1)) +
+  scale_y_continuous(limits=c(0,1), breaks=seq(0,1,.1)) +
+  geom_abline(aes(intercept = fixef.lag_TisFrac_age_old[[1]], slope = fixef.lag_TisFrac_age_old[[2]])) + 
+  theme_classic()
+plot_lag_age_tf_old
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_age_tf_old.png", plot=plot_lag_age_tf_old)
+
+
+#pull tissue fraction x age plots into a single figure
+library(patchwork)
+tf_by_age_fig<-plot_lag_age_tf + plot_lag_age_tf_young + plot_lag_age_tf_old + plot_layout(nrow=1, guides='collect')
+tf_by_age_fig
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_tf_by_age.png", tf_by_age_fig, width = 3000, height = 1500, units = "px")
+
+#plot overall tissue fraction difference between age groups
+#create a variable to split the data into age groups
+lag_dat$old<-ifelse(lag_dat$mri_age_y>=6, 1, 0)
+tf_violin<-ggplot(lag_dat, aes(x=as.factor(old), y=TissueFraction_GMWM)) +
+          geom_violin() +
+          scale_y_continuous(limits=c(0,1)) +
+          stat_summary(fun.data="mean_sdl")
+tf_violin
+
+
+#Model & plot Cho relationship with tissue fraction split by age groups
+
+#model Cho by tissue fraction  in young group
+lag_Cho_tf_young<-lmer(Cho_GPC_PCh_conc_molal ~ TissueFraction_GMWM + (1 | subj_id), data=lag_dat_young, REML=FALSE)
+summary(lag_Cho_tf_young)
+
+fixef.lag_Cho_tf_young<-fixef(lag_Cho_tf_young)
+
+plot_lag_Cho_tf_young<-ggplot(lag_dat_young, aes(x=TissueFraction_GMWM, y=Cho_GPC_PCh_conc_molal, na.exclude = TRUE)) +
+  geom_point(aes(color=as.factor(female))) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=TissueFraction_GMWM, y=Cho_GPC_PCh_conc_molal, color=as.factor(female), group=as.factor(subj_id)), size = .3, show.legend = FALSE) +
+  labs(title = "Ages 2-5.9 (n=185)", x = "Tissue Fraction GM/(GM+WM)", y = "tCho (molal)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  scale_x_continuous(limits=c(0,1), breaks=seq(0,1,.1)) +
+  scale_y_continuous(limits=c(0,4), breaks=seq(0,4,1)) +
+  geom_abline(aes(intercept = fixef.lag_Cho_tf_young[[1]], slope = fixef.lag_Cho_tf_young[[2]])) + 
+  theme_classic()
+plot_lag_Cho_tf_young
+
+
+#model Cho by tissue fraction in old group
+lag_Cho_tf_old<-lmer(Cho_GPC_PCh_conc_molal ~ TissueFraction_GMWM + (1 | subj_id), data=lag_dat_old, REML=FALSE)
+summary(lag_Cho_tf_old)
+
+fixef.lag_Cho_tf_old<-fixef(lag_Cho_tf_old)
+
+plot_lag_Cho_tf_old<-ggplot(lag_dat_old, aes(x=TissueFraction_GMWM, y=Cho_GPC_PCh_conc_molal, na.exclude = TRUE)) +
+  geom_point(aes(color=as.factor(female))) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=TissueFraction_GMWM, y=Cho_GPC_PCh_conc_molal, color=as.factor(female), group=as.factor(subj_id)), size = .3, show.legend = FALSE) +
+  labs(title = "Ages 6-11 (n=134)", x = "Tissue Fraction GM/(GM+WM)", y = "tCho (molal)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  scale_x_continuous(limits=c(0,1), breaks=seq(0,1,.1)) +
+  scale_y_continuous(limits=c(0,4), breaks=seq(0,4,1)) +
+  geom_abline(aes(intercept = fixef.lag_Cho_tf_old[[1]], slope = fixef.lag_Cho_tf_old[[2]])) + 
+  theme_classic()
+plot_lag_Cho_tf_old
+
+#pull Cho by tissue fraction plots into a fig
+Cho_by_tf_agegroup_fig<-plot_lag_Cho_tf_young + plot_lag_Cho_tf_old + plot_layout(nrow=1, guides='collect')
+Cho_by_tf_agegroup_fig
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cho_by_tf_agegroups.png", Cho_by_tf_agegroup_fig, width = 2000, height = 1000, units = "px")
+
+
+##Model & plot Ins relationship with tissue fraction split by age groups
+
+#model Ins by tissue fraction  in young group
+lag_Ins_tf_young<-lmer(Ins_conc_molal ~ TissueFraction_GMWM + (1 | subj_id), data=lag_dat_young, REML=FALSE)
+summary(lag_Ins_tf_young)
+
+fixef.lag_Ins_tf_young<-fixef(lag_Ins_tf_young)
+
+plot_lag_Ins_tf_young<-ggplot(lag_dat_young, aes(x=TissueFraction_GMWM, y=Ins_conc_molal, na.exclude = TRUE)) +
+  geom_point(aes(color=as.factor(female))) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=TissueFraction_GMWM, y=Ins_conc_molal, color=as.factor(female), group=as.factor(subj_id)), size = .3, show.legend = FALSE) +
+  labs(title = "Ages 2-5.9 (n=185)", x = "Tissue Fraction GM/(GM+WM)", y = "Ins (molal)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  scale_x_continuous(limits=c(0,1), breaks=seq(0,1,.1)) +
+  scale_y_continuous(limits=c(0,12), breaks=seq(0,12,1)) +
+  geom_abline(aes(intercept = fixef.lag_Ins_tf_young[[1]], slope = fixef.lag_Ins_tf_young[[2]])) + 
+  theme_classic()
+plot_lag_Ins_tf_young
+
+
+#model Ins by tissue fraction in old group
+lag_Ins_tf_old<-lmer(Ins_conc_molal ~ TissueFraction_GMWM + (1 | subj_id), data=lag_dat_old, REML=FALSE)
+summary(lag_Ins_tf_old)
+
+fixef.lag_Ins_tf_old<-fixef(lag_Ins_tf_old)
+
+plot_lag_Ins_tf_old<-ggplot(lag_dat_old, aes(x=TissueFraction_GMWM, y=Ins_conc_molal, na.exclude = TRUE)) +
+  geom_point(aes(color=as.factor(female))) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=TissueFraction_GMWM, y=Ins_conc_molal, color=as.factor(female), group=as.factor(subj_id)), size = .3, show.legend = FALSE) +
+  labs(title = "Ages 6-11 (n=134)", x = "Tissue Fraction GM/(GM+WM)", y = "Ins (molal)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  scale_x_continuous(limits=c(0,1), breaks=seq(0,1,.1)) +
+  scale_y_continuous(limits=c(0,12), breaks=seq(0,12,1)) +
+  geom_abline(aes(intercept = fixef.lag_Ins_tf_old[[1]], slope = fixef.lag_Ins_tf_old[[2]])) + 
+  theme_classic()
+plot_lag_Ins_tf_old
+
+#pull Ins by tissue fraction plots into a fig
+Ins_by_tf_agegroup_fig<-plot_lag_Ins_tf_young + plot_lag_Ins_tf_old + plot_layout(nrow=1, guides='collect')
+Ins_by_tf_agegroup_fig
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_Ins_by_tf_agegroups.png", Ins_by_tf_agegroup_fig, width = 2000, height = 1000, units = "px")
+
+```
+
+
 ##Edit plots for manuscript
 rescale plots to consistent scale, adjust legends, remove individual titles, join plots as panels in figures
 *Run tissue fractions models and "Plot results of models including tissue fraction" chunks before running this chunk
