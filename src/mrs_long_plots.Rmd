@@ -1,7 +1,7 @@
 ---
-title: "mrs_long_plots"
+title: "Plot study visits - Preschool MRS"
 author: "Meaghan Perdue"
-date: "1/7/2022"
+date: "2022-01-27"
 output: html_document
 ---
 
@@ -18,9 +18,9 @@ library(viridis)
 using viridis color package for colorblind accessibility
 ```{r}
 #read in data
-acg_dat <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n113.csv")
+acg_dat <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n112_tissuefraction.csv")
 
-lag_dat<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n320.csv")
+lag_dat<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n319_tissuefraction.csv")
 
 #filter by age at 1st MRI session (1 row/subject), order by age at first session
 acg_age_ses1 <- acg_dat %>% 
@@ -40,17 +40,18 @@ acg_dat_age_index<-left_join(acg_dat, acg_subj_id_age_index, by = "subj_id")
 p1<-ggplot(acg_dat_age_index, aes(x=mri_age_y, y=id_by_age_ses1, color=as.factor(female)))
 
 plot_acg_sessions<-p1 + 
-  geom_point() +
+  geom_point(size=.5) +
   geom_line(aes(group = as.factor(id_by_age_ses1))) +
-  labs(title = "Anterior Cingulate", x = "Age (years)", y = "Participant") +
-  scale_x_continuous(limits = c(1, 8), n.breaks = 7) +
+  labs(title = "Anterior Cingulate Cortex", x = "Age (years)", y = "Participant") +
+  scale_x_continuous(limits = c(1, 12), n.breaks = 11) +
+  scale_y_continuous(limits = c(1,102), expand = c(.01, .01)) +
   scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
   theme_classic() +
-  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), legend.position = "right")
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), legend.position = c(.8,.2))
 plot_acg_sessions
-ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_timepoints.png")
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_timepoints_n112.png", plot=plot_acg_sessions)
 
-
+#LAG
 #filter by age at 1st MRI session (1 row/subject), order by age at first session
 lag_age_ses1 <- lag_dat %>% 
   group_by(subj_id) %>%
@@ -69,20 +70,21 @@ lag_dat_age_index<-left_join(lag_dat, lag_subj_id_age_index, by = "subj_id")
 p2<-ggplot(lag_dat_age_index, aes(x=mri_age_y, y=id_by_age_ses1, color=as.factor(female)))
 
 plot_lag_sessions<-p2 + 
-  geom_point() +
+  geom_point(size=.5) +
   geom_line(aes(group = as.factor(id_by_age_ses1))) +
-  labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "Participant") +
+  labs(title = "Left Temporo-Parietal Region", x = "Age (years)", y = "Participant") +
   scale_x_continuous(limits = c(1, 12), n.breaks = 11) +
+  scale_y_continuous(limits = c(1,102), expand = c(.01, .01)) +
   scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
   theme_classic() +
-  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), legend.position = "right")
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), legend.position = "none")
 plot_lag_sessions
-ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_timepoints.png")
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_timepoints_n319.png", plot = plot_lag_sessions)
 
 #combine into a single figure
-session_fig<-plot_acg_sessions + plot_lag_sessions + plot_layout(nrow=1, guides ='collect')
+session_fig<-plot_acg_sessions + plot_lag_sessions + plot_layout(nrow=1)
 session_fig
-ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/session_timepoints_fig.png", height = 7, width = 14)
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/manuscript/figures/session_timepoints_fig_updated.png", plot=session_fig, width = 6.5, height = 6.5, units = "in")
 
 ```
 
