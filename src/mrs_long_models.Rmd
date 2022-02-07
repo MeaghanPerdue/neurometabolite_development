@@ -716,6 +716,7 @@ summary(acg_glx_age)
 acg_glx_age_tf <- lmer(Glu_Gln_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=acg_dat_tf, REML=FALSE)
 summary(acg_glx_age_tf)
 
+anova(acg_glx_age, acg_glx_age_tf)
 
 ```
 ##Plot ACG results with 2 tissue fraction outlier subjects excluded
@@ -994,6 +995,7 @@ ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/resul
 ```
 ##Test quadratic effects of age with tissue fraction covariate in LAG models
 Interaction plots showed some nonlinear effects, so testing quadratic effects of age
+**Note that these models were run and subsequently discarded because there was not a sufficient N (52/95) of subjects with >2 timepoints to justify the inclusion of polynomial terms and plotting of individual subjects did not show a pattern of needing polynomial fits
 ```{r}
 
 #create quadratic age variable
@@ -1074,26 +1076,30 @@ acg_summary_table_sig<-tab_model(acg_naa_age, acg_cho_age, acg_ins_age, dv.label
 acg_summary_table_sig #opens in Rstudio viewer, can open from there to web browser and save as PDF or whatever
 
 #create html summary table for all models ACG
-acg_summary_table_all<-tab_model(acg_naa_age, acg_cre_age, acg_cho_age, acg_ins_age, acg_glx_age, dv.labels = c("tNAA (molal)", "tCre (molal)", "tCho (molal)", "Ins (molal)", "Glx (molal)"), pred.labels = c("(Intercept)", "Age (years)"))
+acg_summary_table_all<-tab_model(acg_naa_age, acg_cre_age, acg_cho_age, acg_ins_age, acg_glx_age, show.std = TRUE, show.re.var=FALSE, show.icc = FALSE, show.r2=FALSE, dv.labels = c("tNAA (molal)", "tCre (molal)", "tCho (molal)", "Ins (molal)", "Glx (molal)"), pred.labels = c("(Intercept)", "Age (years)"))
 acg_summary_table_all #opens in Rstudio viewer, can open from there to web browser and save as PDF or whatever
 
-#output text summaries for sig. ACG models
-report(acg_naa_age)
-report(acg_cho_age)
 
+#output text summaries for ACG models
+report(acg_naa_age)
+report(acg_cre_age)
+report(acg_cho_age)
+report(acg_ins_age)
+report(acg_glx_age)
 
 #create html summary table for sig. models LAG
-lag_summary_table_sig<-tab_model(lag_naa_age_TisFrac, lag_cre_age_TisFrac, lag_cho_age_TisFrac_int, lag_ins_age_TisFrac_int, dv.labels = c("tNAA (molal)", "tCre (molal)", "tCho (molal)", "Ins (molal)"), pred.labels = c("(Intercept)", "Age (years)", "Tissue Fraction GM/(WM+GM)", "Age:Tissue Fraction"))
+lag_summary_table_sig<-tab_model(lag_naa_age_TisFrac, lag_cre_age_TisFrac, lag_cho_age_TisFrac_int, lag_ins_age_TisFrac_int, show.re.var=FALSE, show.icc = FALSE, show.r2=FALSE, dv.labels = c("tNAA (molal)", "tCre (molal)", "tCho (molal)", "Ins (molal)"), pred.labels = c("(Intercept)", "Age (years)", "Tissue Fraction GM/(WM+GM)", "Age:Tissue Fraction"))
 lag_summary_table_sig
 
 #create html summary table for all models LAG
-lag_summary_table_all<-tab_model(lag_naa_age_TisFrac, lag_cre_age_TisFrac, lag_cho_age_TisFrac_int, lag_ins_age_TisFrac_int, lag_glx_age_TisFrac_quad, dv.labels = c("tNAA (molal)", "tCre (molal)", "tCho (molal)", "Ins (molal)", "Glx (molal)"), pred.labels = c("(Intercept)", "Age (years)", "Tissue Fraction GM/(WM+GM)", "Age:Tissue Fraction", "Age^2", "Age:Age^2", "Age^2:Tissue Fraction", "Age:Age^2:Tissue Fraction"))
+lag_summary_table_all<-tab_model(lag_naa_age_TisFrac, lag_cre_age_TisFrac, lag_cho_age_TisFrac, lag_ins_age_TisFrac, lag_glx_age_TisFrac, show.std = TRUE, show.re.var=FALSE, show.icc = FALSE, show.r2=FALSE, dv.labels = c("tNAA (molal)", "tCre (molal)", "tCho (molal)", "Ins (molal)", "Glx (molal)"), pred.labels = c("(Intercept)", "Age (years)", "Tissue Fraction GM/(WM+GM)"))
 lag_summary_table_all
 
 report(lag_naa_age_TisFrac)
 report(lag_cre_age_TisFrac)
-report(lag_cho_age_TisFrac_int)
-report(lag_ins_age_TisFrac_int)
+report(lag_cho_age_TisFrac)
+report(lag_ins_age_TisFrac)
+report(lag_glx_age_TisFrac)
 
 #Glx models - unpacking for interpretation
 glx_tf_sum<-tab_model(lag_glx_age_TisFrac)
@@ -1136,7 +1142,7 @@ ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/resul
 #pull fixed effects for overall model
 fixef.lag_cre_age_TisFrac<-fixef(lag_cre_age_TisFrac)
 
-#subset dataframe with only subjects included in NAA analysis
+#subset dataframe with only subjects included in Cre analysis
 lag_dat_plot_Cre<- lag_dat %>% 
   filter(! is.na(Cre_PCr_conc_molal))
 
@@ -1155,7 +1161,28 @@ plot_lag_cre_age_tf
 
 
 #LAG - Cho
+#pull fixed effects for overall model
+fixef.lag_cho_age_TisFrac<-fixef(lag_cho_age_TisFrac)
 
+#subset dataframe with only subjects included in Cre analysis
+lag_dat_plot_cho<- lag_dat %>% 
+  filter(! is.na(Cho_GPC_PCh_conc_molal))
+
+#calculate partial effect of age on Cre (remove effect of tissue fraction)
+lag_cho_partial <- remef(lag_cho_age_TisFrac, fix = "TissueFraction_GMWM") #does NOT remove random effects variance
+
+plot_lag_cho_age_tf<-ggplot(lag_dat_plot_cho, aes(x=mri_age_y, y=lag_cho_partial, na.exclude = TRUE, color=as.factor(female))) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_cho_partial, group=as.factor(subj_id)), size = .3, show.legend = FALSE) +
+  labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "tCho | Tissue Fraction") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_abline(aes(intercept = fixef.lag_cho_age_TisFrac[[1]], slope = fixef.lag_cho_age_TisFrac[[2]])) + 
+  theme_classic()
+plot_lag_cho_age_tf
+  ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cho_age_tf_partialef.png")
+  
+  
+#interaction plot
 Cho_age_tf_int_plot <- interact_plot(lag_cho_age_TisFrac_int, pred = mri_age_y, modx = TissueFraction_GMWM, data=lag_dat, plot.points=TRUE, legend.main="Tissue Fraction GM/(GM+WM)", modx.labels=c(".535 (-1 SD)", ".642 (Mean)", ".750 (+1 SD)")) +
   labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "tCho (molal)") + 
   scale_color_viridis(option="mako", name="Tissue Fraction GM/(GM+WM)", begin= .32, end=.85) +
@@ -1165,8 +1192,32 @@ Cho_age_tf_int_plot
 
 
 #LAG - Ins
+#Tissue fraction only model
+#pull fixed effects for overall interaction model
+fixef.lag_ins_age_TisFrac<-fixef(lag_ins_age_TisFrac)
+
+#subset dataframe with only subjects included in NAA analysis
+lag_dat_plot_Ins<- lag_dat %>% 
+  filter(! is.na(Ins_conc_molal))
+
+#calculate partial effect of age on Ins (remove effect of tissue fraction)
+lag_ins_partial <- remef(lag_ins_age_TisFrac, fix = c("TissueFraction_GMWM")) #does NOT remove random effects variance
+
+#plot main effect of age controlling for tissue fraction and age x tissue fraction interaction
+plot_lag_ins_age_tf<-ggplot(lag_dat_plot_Ins, aes(x=mri_age_y, y=lag_ins_partial, na.exclude = TRUE, color=as.factor(female))) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_ins_partial, group=as.factor(subj_id)), size = .3, show.legend = FALSE) +
+  labs(title = "Left Temporo-Parietal", x = "Age (years)", y = "Ins | Tissue Fraction") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_abline(aes(intercept = fixef.lag_ins_age_TisFrac[[1]], slope = fixef.lag_ins_age_TisFrac[[2]])) + 
+  theme_classic()
+plot_lag_ins_age_tf
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_ins_age_tf_partialef.png")
+
+
+  
 #Main effect of age 
- #pull fixed effects for overall model
+#pull fixed effects for overall interaction model
 fixef.lag_ins_age_TisFrac_int<-fixef(lag_ins_age_TisFrac_int)
 
 #subset dataframe with only subjects included in NAA analysis
@@ -1314,6 +1365,7 @@ plot_lag_cre_age_tf
 
 #LAG - Cho
 
+#interaction model
 #pull fixed effects for overall model
 fixef.lag_cho_age_TisFrac_int<-fixef(lag_cho_age_TisFrac_int)
 
@@ -1539,7 +1591,7 @@ ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/resul
 ACG_Cho<-plot_acg_cho_age +
   scale_x_continuous(limits=c(2,8), breaks=seq(2,8,1)) +
   scale_y_continuous(limits=c(1,19), breaks=seq(1,19,1)) +
-  theme(legend.position='none') +
+  theme(legend.position=c(.8,.9), legend.background = element_rect(fill="transparent", linetype = NULL)) +
   labs(title=NULL)
 ACG_Cho
 ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_cho_age_n112_rescale.png")
@@ -1554,9 +1606,9 @@ ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/resul
 
 #Join ACG main effects plots in a single figure
 library(patchwork)
-ACG_fig<-ACG_NAA + ACG_Cho + ACG_Ins + plot_layout(nrow=1) + plot_annotation(title = 'Relationships between age and metabolite concentrations in anterior cingulate cortex')
+ACG_fig<-ACG_NAA + ACG_Cho + plot_layout(nrow=1) + plot_annotation(title = 'Relationships between age and metabolite concentrations in ACC')
 ACG_fig
-ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/ACG_maineffects_fig_grid_viridis.png", ACG_fig, width = 3000, height = 1500, units = "px")
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/ACG__NAA_Cho_maineffects_fig_grid_viridis.png", ACG_fig, width = 2000, height = 1500, units = "px")
 
 
 #read data LAG
@@ -1573,34 +1625,34 @@ LAG_NAA<-plot_lag_naa_age_tf +
 LAG_NAA
 ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_naa_age_partialef_rescale.png")
 
+#rescale plot to show Cho ~ age while controlling for Tissue Fraction
+LAG_Cho<-plot_lag_cho_age_tf + 
+  scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
+  scale_y_continuous(limits=c(1,18), breaks=seq(1,18,1)) +
+  theme(legend.position='none') +
+  labs(title=NULL)
+LAG_Cho
+ ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cho_age_tf_int_rescale.png")
 
 #LAG - Cre
 LAG_Cre<-plot_lag_cre_age_tf +
   scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
   scale_y_continuous(limits=c(1,18), breaks=seq(1,18,1)) +
-  theme(legend.position='none') +
+  theme(legend.position=c(.8,.9), legend.background = element_rect(fill="transparent", linetype = NULL)) +
   labs(title=NULL)
 LAG_Cre  
 ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cre_age_partialef_rescale.png")
 
-#LAG - Ins Main effect of age 
-LAG_Ins_main<-plot_lag_ins_age_tf +
-  scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
-  scale_y_continuous(limits=c(1,18), breaks=seq(1,18,1)) +
-  theme(legend.position=c(.8,.9), legend.background = element_rect(fill="transparent", linetype = NULL)) +
-  labs(title=NULL)
-LAG_Ins_main
-ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_ins_age_tf_maineffect_rescale.png")
 
 #Join LAG main effects plots in a single figure
 library(patchwork)
-LAG_fig<-LAG_NAA + LAG_Cre + LAG_Ins_main + plot_layout(nrow=1) + plot_annotation(title = 'Relationships between age and metabolite concentrations in left temporo-parietal region')
+LAG_fig<-LAG_NAA + LAG_Cho + LAG_Cre + plot_layout(nrow=1) + plot_annotation(title = 'Relationships between age and metabolite concentrations in LTP')
 LAG_fig
-ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/LAG_maineffects_fig_grid_viridis.png", LAG_fig, width = 3000, height = 1500, units = "px")
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/LAG_age_effects_fig_grid_viridis.png", LAG_fig, width = 3000, height = 1500, units = "px")
 
 #interaction plots
 #LAG - Cho
-LAG_Cho_int<-Cho_age_tf_int_plot +
+LAG_Cho<-Cho_age_tf_plot +
   scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
   scale_y_continuous(limits=c(0,4), breaks=seq(1,4,1)) +
   labs(title=NULL)
@@ -1626,32 +1678,199 @@ ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/resul
 ```
 ##FDR Correction for multiple comparisons: final models
 run FDR correction (Benjamini & Hochberg method) on final models (simple growth models for ACG, tissue fraction models for LAG)
-Following Reynolds et al. 2019 NeuroImage - correct for multiple comparisons within a given factor (e.g. age) across models (2 regions x 5 metabolites = 10 comparisons)
+Following Reynolds et al. 2019 NeuroImage - correct for multiple comparisons within a given factor (e.g. age) across models. Correcting within ACG and LTP separately as they are separate data sets
 ```{r}
-library(broom)
-#list models (voxel/metabolite pair)
-models<- c("acg_naa_age", "acg_cre_age", "acg_cho_age", "acg_ins_age", "acg_glx_age", "lag_naa_age_TisFrac", "lag_cre_age_TisFrac", "lag_cho_age_TisFrac_int", "lag_ins_age_TisFrac_int", "lag_glx_age_TisFrac_quad")
+#ACG
+#list models
+models_acg<- c(acg_naa_age, acg_cre_age, acg_cho_age, acg_ins_age, acg_glx_age)
 
-#list p-values for age in each model, matching order of models (tried to do this with sapply function but couldn't get it to work)
-p_age<-c(coef(summary(acg_naa_age))[2,5], coef(summary(acg_cre_age))[2,5], coef(summary(acg_cho_age))[2,5], coef(summary(acg_ins_age))[2,5], coef(summary(acg_glx_age))[2,5], coef(summary(lag_naa_age_TisFrac))[2,5], coef(summary(lag_cre_age_TisFrac))[2,5], coef(summary(lag_cho_age_TisFrac_int))[2,5], coef(summary(lag_ins_age_TisFrac_int))[2,5], coef(summary(lag_glx_age_TisFrac_quad))[2,5])
+#list p-values for age in each model
+p_acg<-models_acg %>%
+  map(summary) %>%
+  map(coef) %>%
+  map_dbl(10) #index of p-val for age in coef list
 
-fdr_table<-data.frame(models, p_age)
+model_names<-c("NAA", "Cre", "Cho", "Ins", "Glx")
+fdr_table_acg<-data.frame(model_names, p_acg)
 
-fdr_table$p_fdr<-p.adjust(p_age, method = "fdr", n= length(p_age))
-fdr_table
+fdr_table_acg$p_fdr<-p.adjust(p_acg, method = "fdr", n=length(p_acg))
+colnames(fdr_table_acg)<- c("Metabolite", "p, unc.", "p, FDR")
 
-write.csv(fdr_table, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/fdr_table_age.csv")
+write.csv(fdr_table_acg, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/fdr_table_acg_age.csv")
 
 
-#run FDR correction on 3 models that included interactions (LAG: Cho, Ins, Glx)
+#LAG
 
-models_b<-c("lag_cho_age_TisFrac_int", "lag_ins_age_TisFrac_int", "lag_glx_age_TisFrac_quad")
-p_int<-c(coef(summary(lag_cho_age_TisFrac_int))[4,5], coef(summary(lag_ins_age_TisFrac_int))[4,5], coef(summary(lag_glx_age_TisFrac_quad))[5,5])
+#age + tf models
+models_lag<-c(lag_naa_age_TisFrac, lag_cre_age_TisFrac, lag_glx_age_TisFrac)
 
-fdr_table_b<-data.frame(models_b, p_int)
-fdr_table_b$p_fdr<-p.adjust(p_int, method = "fdr", n= length(p_int))
-fdr_table_b
-write.csv(fdr_table_b, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/fdr_table_int.csv")
+#interaction models
+models_lag_int<-c(lag_cho_age_TisFrac_int, lag_ins_age_TisFrac_int)
+
+#list p-values for age in age + tf models, 
+p_lag_age<-models_lag %>%
+  map(summary) %>%
+  map(coef) %>%
+  map(14) #index of p-val for age in coef list
+
+#list p-values for age in interaction models 
+p_lag_age_int<-models_lag_int %>%
+  map(summary) %>%
+  map(coef) %>%
+  map(18) #index of p-val for age in coef list including interaction term
+
+
+model_names_lag<-c("NAA", "Cre", "Glx", "Cho", "Ins") #arranged to match order of models listed 
+
+#combine lists of p-values from models
+p_lag_age_all<-unlist(c(p_lag_age, p_lag_age_int))
+
+#run FDR correction
+p_fdr_lag<-p.adjust(p_lag_age_all, method = "fdr", n=length(p_lag_age_all))
+
+#create dataframe for output
+fdr_table_lag<-data.frame(model_names_lag, p_lag_age_all, p_fdr_lag)
+
+colnames(fdr_table_lag)<- c("Metabolite", "p, unc.", "p, FDR")
+
+write.csv(fdr_table_lag, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/fdr_table_lag_age.csv")
+
+#decided to exclude age X TF interactions, running FDR on age models controlling for TF
+
+#list models
+models_lag<- c(lag_naa_age_TisFrac, lag_cre_age_TisFrac, lag_cho_age_TisFrac, lag_ins_age_TisFrac, lag_glx_age_TisFrac)
+
+#list p-values for age in each model
+p_lag<-models_lag %>%
+  map(summary) %>%
+  map(coef) %>%
+  map_dbl(14) #index of p-val for age in coef list
+
+model_names<-c("NAA", "Cre", "Cho", "Ins", "Glx")
+fdr_table_lag_new<-data.frame(model_names, p_lag)
+
+fdr_table_lag_new$p_fdr<-p.adjust(p_lag, method = "fdr", n=length(p_lag))
+colnames(fdr_table_lag_new)<- c("Metabolite", "p, unc.", "p, FDR")
+
+write.csv(fdr_table_lag_new, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/fdr_table_lag_age_tf_noInt.csv")
+
+
+#run FDR correction on interaction terms (LAG: Cho, Ins)
+#pull p-values for interaction term from relevant models
+p_lag_age_int<-models_lag_int %>%
+  map(summary) %>%
+  map(coef) %>%
+  map(20) #index of p-val for age in coef list including interaction term
+
+#run FDR
+p_fdr_int<-p.adjust(p_lag_age_int, method = "fdr", n= length(p_lag_age_int))
+
+model_names_int<-c("Cho", "Ins")
+
+#put it into a dataframe
+fdr_table_int<-data.frame(model_names_int, unlist(p_lag_age_int), p_fdr_int)
+colnames(fdr_table_int)<- c("Metabolite", "p, unc.", "p, FDR")
+
+write.csv(fdr_table_int, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/fdr_table_int.csv")
+
+
+#run FDR correction on Tissue Fraction effects for LAG models
+#list p-values for age in age + tf models, 
+p_lag_tf<-models_lag %>%
+  map(summary) %>%
+  map(coef) %>%
+  map(13) #index of p-val for age in coef list
+
+#list p-values for age in interaction models 
+p_lag_tf_int<-models_lag_int %>%
+  map(summary) %>%
+  map(coef) %>%
+  map(19) #index of p-val for age in coef list including interaction term
+
+
+model_names_lag<-c("NAA", "Cre", "Glx", "Cho", "Ins") #arranged to match order of models listed 
+
+#combine lists of p-values from models
+p_lag_tf_all<-unlist(c(p_lag_tf, p_lag_tf_int))
+
+#run FDR correction
+p_fdr_lag_tf<-p.adjust(p_lag_tf_all, method = "fdr", n=length(p_lag_tf_all))
+
+#create dataframe for output
+fdr_table_lag_tf<-data.frame(model_names_lag, p_lag_tf_all, p_fdr_lag_tf)
+
+colnames(fdr_table_lag_tf)<- c("Metabolite", "p, unc.", "p, FDR")
+
+write.csv(fdr_table_lag_tf, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/fdr_table_lag_tf.csv")
+
+
+```
+
+##Test individual differences in slopes of LAG subjects with >2 time points 
+
+```{r}
+
+#list all subjects with >2 time points
+lag_subs_long<-group_by(lag_dat, subj_id) %>%
+  summarise(n=n()) %>%
+  filter(n > 2)
+
+length(lag_dat_long$subj_id) #52 subjects have data for >2 time points
+
+#filter dataset to subjects with >2 time points
+lag_dat_long <- lag_dat %>%
+                    filter(subj_id %in% lag_subs_long$subj_id)
+
+#fit random slopes models in longitudinal subset
+lag_naa_TisFrac_age_long <-lmer(NAA_conc_molal ~ TissueFraction_GMWM + mri_age_y + (1 | subj_id), data=lag_dat_long, REML=FALSE)
+summary(lag_naa_TisFrac_age_long)
+
+lag_naa_TisFrac_age_randslope <- lmer(NAA_conc_molal ~ TissueFraction_GMWM + mri_age_y + (1 + mri_age_y | subj_id), data=lag_dat_long, REML=FALSE)
+summary(lag_naa_TisFrac_age_randslope)
+
+#compare model fit
+anova(lag_naa_TisFrac_age_long, lag_naa_TisFrac_age_randslope) #including random slopes did not improve fit
+
+#Glx
+lag_glx_TisFrac_age_long <-lmer(Glu_Gln_conc_molal ~ TissueFraction_GMWM + mri_age_y + (1 | subj_id), data=lag_dat_long, REML=FALSE)
+summary(lag_glx_TisFrac_age_long)
+
+#quadratic model
+lag_dat_long$mri_age_y2 <- lag_dat_long$mri_age_y^2
+lag_glx_TisFrac_age_long_quad <-lmer(Glu_Gln_conc_molal ~ TissueFraction_GMWM + mri_age_y + mri_age_y2 + (1 | subj_id), data=lag_dat_long, REML=FALSE)
+summary(lag_glx_TisFrac_age_long_quad)
+
+#compare models
+anova(lag_glx_TisFrac_age_long, lag_glx_TisFrac_age_long_quad) #sig. improved fit
+
+#add random slope
+lag_glx_TisFrac_age_long_quad_randslope <-lmer(Glu_Gln_conc_molal ~ TissueFraction_GMWM + mri_age_y + mri_age_y2 + (1 + mri_age_y + mri_age_y2 | subj_id), data=lag_dat_long, REML=FALSE)
+summary(lag_glx_TisFrac_age_long_quad_randslope)
+coef(lag_glx_TisFrac_age_long_quad_randslope) #show different slopes for every subject
+
+#compare models
+anova(lag_glx_TisFrac_age_long_quad, lag_glx_TisFrac_age_long_quad_randslope) #not different
+
+#Plot Glx quadratic
+#pull fixed effects for overall model
+fixef.lag_glx_TisFrac_age_long_quad<-fixef(lag_glx_TisFrac_age_long_quad)
+
+#subset dataframe with only subjects included in NAA analysis
+lag_dat_long_plot<- lag_dat_long %>% 
+  filter(! is.na(Glu_Gln_conc_molal))
+
+#calculate partial effect tissue fraction on tNAA (remove effect of tf)
+lag_glx_long_age_partial <- remef(lag_glx_TisFrac_age_long_quad, fix = c("TissueFraction_GMWM", "mri_age_y2")) #does NOT remove random effects variance
+
+#create plot to show NAA ~ age while controlling for Tissue Fraction
+plot_lag_glx_tf<-ggplot(lag_dat_long_plot, aes(x=mri_age_y, y=Glu_Gln_conc_molal, na.exclude = TRUE, color=as.factor(female))) +
+  geom_point() +
+  geom_line(se = FALSE, aes(x=mri_age_y, y=Glu_Gln_conc_molal, group=as.factor(subj_id)), size = .3, show.legend = FALSE) +
+  labs(title = "Left Temporo-Parietal", x = "age", y = "Glx") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_abline(aes(intercept = fixef.lag_glx_TisFrac_age_long_quad[[1]], slope = fixef.lag_glx_TisFrac_age_long_quad[[4]])) + 
+  theme_classic()
+plot_lag_glx_tf
 
 
 ```
