@@ -1807,7 +1807,7 @@ write.csv(fdr_table_lag_tf, "/Users/meaghan/OneDrive - University of Calgary/Pre
 ```
 
 ##Test individual differences in slopes of LAG subjects with >2 time points 
-
+Exploratory analysis
 ```{r}
 
 #list all subjects with >2 time points
@@ -1875,6 +1875,165 @@ plot_lag_glx_tf
 
 ```
 
+##Test quadratic effects in LAG subjects with >2 time points 
+Exploratory analysis to characterize change within subjects
+```{r}
+#read data
+lag_dat<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n319_tissuefraction.csv")
 
+#list all subjects with >2 time points
+lag_subs_long<-group_by(lag_dat, subj_id) %>%
+  summarise(n=n()) %>%
+  filter(n > 2)
+
+length(lag_subs_long$subj_id) #52 subjects have data for >2 time points
+
+#filter dataset to subjects with >2 time points
+lag_dat_long <- lag_dat %>%
+                    filter(subj_id %in% lag_subs_long$subj_id)
+
+#create quadratic age term
+lag_dat_long$mri_age_y2<- (lag_dat_long$mri_age_y)^2
+
+#NAA
+#fit age + tissue fraction model in longitudinal subset
+lag_naa_TisFrac_age_long <-lmer(NAA_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=lag_dat_long, REML=FALSE)
+summary(lag_naa_TisFrac_age_long)
+
+lag_naa_TisFrac_age_long_quad <-lmer(NAA_conc_molal ~ mri_age_y + TissueFraction_GMWM + mri_age_y2 + (1 | subj_id), data=lag_dat_long, REML=FALSE)
+summary(lag_naa_TisFrac_age_long_quad)
+
+#compare model fit
+anova(lag_naa_TisFrac_age_long, lag_naa_TisFrac_age_long_quad) #including quadratic term did not improve fit
+
+#Cho
+#fit age + tissue fraction model in longitudinal subset
+lag_cho_TisFrac_age_long <-lmer(Cho_GPC_PCh_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=lag_dat_long, REML=FALSE)
+summary(lag_cho_TisFrac_age_long)
+
+lag_cho_TisFrac_age_long_quad <-lmer(Cho_GPC_PCh_conc_molal ~ mri_age_y + TissueFraction_GMWM + mri_age_y2 + (1 | subj_id), data=lag_dat_long, REML=FALSE)
+summary(lag_cho_TisFrac_age_long_quad)
+
+#compare model fit
+anova(lag_cho_TisFrac_age_long, lag_cho_TisFrac_age_long_quad) #including quadratic term improved fit
+
+#add sex
+lag_cho_TisFrac_age_long_quad_sex <-lmer(Cho_GPC_PCh_conc_molal ~ mri_age_y + TissueFraction_GMWM + mri_age_y2 + female + (1 | subj_id), data=lag_dat_long, REML=FALSE)
+summary(lag_cho_TisFrac_age_long_quad_sex)
+
+#Cre
+#fit age + tissue fraction model in longitudinal subset
+lag_cre_TisFrac_age_long <-lmer(Cre_PCr_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=lag_dat_long, REML=FALSE)
+summary(lag_cre_TisFrac_age_long)
+
+lag_cre_TisFrac_age_long_quad <-lmer(Cre_PCr_conc_molal ~ mri_age_y + TissueFraction_GMWM + mri_age_y2 + (1 | subj_id), data=lag_dat_long, REML=FALSE)
+summary(lag_cre_TisFrac_age_long_quad)
+
+#compare model fit
+anova(lag_cre_TisFrac_age_long, lag_cre_TisFrac_age_long_quad) #including quadratic term did not improve fit
+
+#Ins
+#fit age + tissue fraction model in longitudinal subset
+lag_ins_TisFrac_age_long <-lmer(Ins_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=lag_dat_long, REML=FALSE)
+summary(lag_ins_TisFrac_age_long)
+
+lag_ins_TisFrac_age_long_quad <-lmer(Ins_conc_molal ~ mri_age_y + TissueFraction_GMWM + mri_age_y2 + (1 | subj_id), data=lag_dat_long, REML=FALSE)
+summary(lag_ins_TisFrac_age_long_quad)
+
+#compare model fit
+anova(lag_ins_TisFrac_age_long, lag_ins_TisFrac_age_long_quad) #including quadratic term did not improve fit
+
+
+#Glx
+#fit age + tissue fraction model in longitudinal subset
+lag_glx_TisFrac_age_long <-lmer(Glu_Gln_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=lag_dat_long, REML=FALSE)
+summary(lag_glx_TisFrac_age_long)
+
+#quadratic model
+lag_glx_TisFrac_age_long_quad <-lmer(Glu_Gln_conc_molal ~ mri_age_y + TissueFraction_GMWM + mri_age_y2 + (1 | subj_id), data=lag_dat_long, REML=FALSE)
+summary(lag_glx_TisFrac_age_long_quad)
+
+#compare models
+anova(lag_glx_TisFrac_age_long, lag_glx_TisFrac_age_long_quad) #sig. improved fit
+
+#add sex
+lag_glx_TisFrac_age_long_quad_sex <-lmer(Glu_Gln_conc_molal ~ mri_age_y + TissueFraction_GMWM + mri_age_y2 + female + (1 | subj_id), data=lag_dat_long, REML=FALSE)
+summary(lag_glx_TisFrac_age_long_quad_sex)
+
+#compare models
+anova(lag_glx_TisFrac_age_long_quad, lag_glx_TisFrac_age_long_quad_sex) #not sig.
+
+#Print model summaries to table
+library(sjPlot)
+
+lag_long_summary_table_all<-tab_model(lag_naa_TisFrac_age_long, lag_cre_TisFrac_age_long, lag_cho_TisFrac_age_long_quad, lag_glx_TisFrac_age_long_quad, lag_ins_TisFrac_age_long, show.re.var=FALSE, show.icc = FALSE, show.r2=FALSE)
+lag_long_summary_table_all #opens in Rstudio viewer, can open from there to web browser and save as PDF or whatever
+
+
+```
+
+##Plot longitudinal subset
+
+```{r}
+#Plot NAA linear
+plot_lag_naa_tf_long<-ggplot(lag_dat_long, aes(x=mri_age_y, y=NAA_conc_molal, na.exclude = TRUE)) +
+  geom_point(aes(color=as.factor(female))) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=NAA_conc_molal, group=as.factor(subj_id), color=as.factor(female)), size = .3, show.legend = FALSE) +
+  labs(x = "Age (years)", y = "tNAA (molal)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_smooth(method = "lm", se = FALSE, colour = "black") + 
+  scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
+  scale_y_continuous(limits=c(0,20), breaks=seq(0,20,5)) +
+  theme_classic()
+plot_lag_naa_tf_long
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_naa_long_age_tf_quad.png", plot=plot_lag_naa_tf_long)
+
+#Plot Cho quadratic - scaled Y axis so effect would be visible
+plot_lag_cho_tf_quad<-ggplot(lag_dat_long, aes(x=mri_age_y, y=Cho_GPC_PCh_conc_molal, na.exclude = TRUE)) +
+  geom_point(aes(color=as.factor(female))) +
+  geom_smooth(method = "lm", se = FALSE, formula = y ~ poly(x,2), aes(x=mri_age_y, y=Cho_GPC_PCh_conc_molal, group=as.factor(subj_id), color=as.factor(female)), size = .3, show.legend = FALSE) +
+  labs(x = "Age (years)", y = "tCho (molal)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_smooth(method = "lm", formula = y ~ poly(x,2), se = FALSE, colour = "black") + 
+  scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
+  scale_y_continuous(limits=c(0,5), breaks=seq(0,5,1)) +
+  theme_classic()
+plot_lag_cho_tf_quad
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cho_long_age_tf_quad.png", plot=plot_lag_cho_tf_quad)
+
+#Plot Cre linear
+plot_lag_cre_tf_long<-ggplot(lag_dat_long, aes(x=mri_age_y, y=Cre_PCr_conc_molal, na.exclude = TRUE)) +
+  geom_point(aes(color=as.factor(female))) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=Cre_PCr_conc_molal, group=as.factor(subj_id), color=as.factor(female)), size = .3, show.legend = FALSE) +
+  labs(x = "Age (years)", y = "tCr (molal)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_smooth(method = "lm", se = FALSE, colour = "black") + 
+  scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
+  scale_y_continuous(limits=c(0,15), breaks=seq(0,15,5)) +
+  theme_classic()
+plot_lag_cre_tf_long
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cre_long_age_tf_quad.png", plot=plot_lag_cre_tf_long)
+
+#Plot Glx quadratic
+plot_lag_glx_tf_quad<-ggplot(lag_dat_long, aes(x=mri_age_y, y=Glu_Gln_conc_molal, na.exclude = TRUE)) +
+  geom_point(aes(color=as.factor(female))) +
+  geom_smooth(method = "lm", se = FALSE, formula = y ~ poly(x,2), aes(x=mri_age_y, y=Glu_Gln_conc_molal, group=as.factor(subj_id), color=as.factor(female)), size = .3, show.legend = FALSE) +
+  labs(x = "Age (years)", y = "Glx (molal)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_smooth(method = "lm", formula = y ~ poly(x,2), se = FALSE, colour = "black") + 
+  scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
+  scale_y_continuous(limits=c(0,30), breaks=seq(0,30,5)) +
+  theme_classic()
+plot_lag_glx_tf_quad
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_glx_long_age_tf_quad.png", plot=plot_lag_glx_tf_quad)
+
+#gather plots in a single figure
+library(patchwork)
+lag_long_fig<-plot_lag_naa_tf_long + plot_lag_cho_tf_quad + plot_lag_cre_tf_long + plot_lag_glx_tf_quad + plot_layout(nrow=2, guides ='collect')
+lag_long_fig
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/results_lag_long_n52.png", lag_long_fig, width = 2000, height = 1800, units = "px")
+
+
+```
 
 
