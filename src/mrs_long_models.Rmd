@@ -1587,7 +1587,6 @@ ACG_NAA<-plot_acg_naa_age +
 ACG_NAA
 ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_naa_age_n112_rescale.png")
 
-
 ACG_Cho<-plot_acg_cho_age +
   scale_x_continuous(limits=c(2,8), breaks=seq(2,8,1)) +
   scale_y_continuous(limits=c(1,19), breaks=seq(1,19,1)) +
@@ -1609,6 +1608,53 @@ library(patchwork)
 ACG_fig<-ACG_NAA + ACG_Cho + plot_layout(nrow=1) + plot_annotation(title = 'Relationships between age and metabolite concentrations in ACC')
 ACG_fig
 ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/ACG__NAA_Cho_maineffects_fig_grid_viridis.png", ACG_fig, width = 2000, height = 1500, units = "px")
+
+#edit dot & line sizes, try different scale
+#ACG plots - main effects only
+
+#NAA
+#pull fixed effects
+fixef.acg_naa<-fixef(acg_naa_age)
+
+ACG_NAA<-ggplot(acg_dat_tf, aes(x=mri_age_y, y=NAA_conc_molal,color=as.factor(female))) +
+  geom_point(size=1) +
+  labs(x = "Age (years)", y = "tNAA (molal)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=NAA_conc_molal, group=as.factor(subj_id)), size = .5, show.legend = FALSE) +
+  geom_abline(aes(intercept = fixef.acg_naa[[1]], slope= fixef.acg_naa[[2]]), size=1) + 
+  scale_x_continuous(limits=c(2,8), breaks=seq(2,8,1)) +
+  scale_y_continuous(limits=c(10,20), breaks=seq(10,20,1)) +
+  theme_classic(base_size = 14) +
+  theme(legend.position='none') 
+ACG_NAA
+
+ggsave(plot = ACG_NAA, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_naa_age_n112_rescale_v2.png")
+
+#Cho
+#pull intercept and slope from model for regression line
+fixef.acg_cho<-fixef(acg_cho_age)
+
+#plot
+ACG_Cho<-ggplot(acg_dat_tf, aes(x=mri_age_y, y=Cho_GPC_PCh_conc_molal,color=as.factor(female))) + 
+  geom_point(size=1) +
+  labs(x = "Age (years)", y = "tCho (molal)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=Cho_GPC_PCh_conc_molal, group=as.factor(subj_id)), size = .5, show.legend = FALSE) +
+  geom_abline(aes(intercept = fixef.acg_cho[[1]], slope= fixef.acg_cho[[2]]), size=1) + 
+  scale_x_continuous(limits=c(2,8), breaks=seq(2,8,1)) +
+  scale_y_continuous(limits=c(0,10), breaks=seq(0,10,1)) +
+  theme_classic(base_size = 14) +
+  theme(legend.position=c(.8,.9), legend.background = element_rect(fill="transparent", linetype = NULL)) 
+ACG_Cho
+
+ggsave(plot=ACG_Cho,"/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_cho_age_viridis_n112_v2.png")
+
+
+#Join updated ACG main effects plots in a single figure
+library(patchwork)
+ACG_fig<-ACG_NAA + ACG_Cho + plot_layout(nrow=1)
+ACG_fig
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/ACG__NAA_Cho_maineffects_fig_grid_viridis_v2.png", ACG_fig, width = 2000, height = 1500, units = "px")
 
 
 #read data LAG
@@ -1674,6 +1720,61 @@ LAG_int_fig<- LAG_Cho_int + LAG_Ins_int + plot_layout(nrow=1, guides = 'collect'
 LAG_int_fig
 
 ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/LAG_interactions_fig_grid_viridis.png", LAG_int_fig, width = 3000, height = 1500, units = "px")
+
+##editing plots for manuscript - LTP
+
+#create plot to show NAA ~ age while controlling for Tissue Fraction
+LAG_NAA<-ggplot(lag_dat_plot, aes(x=mri_age_y, y=lag_naa_partial, na.exclude = TRUE, color=as.factor(female))) +
+  geom_point(size=1) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_naa_partial, group=as.factor(subj_id)), size = .5, show.legend = FALSE) +
+  labs(x = "Age (years)", y = "tNAA (corrected for tissue fraction)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_abline(aes(intercept = fixef.lag_naa_TisFrac[[1]], slope = fixef.lag_naa_TisFrac[[2]]), size=1) + 
+  scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
+  scale_y_continuous(limits=c(8,18), breaks=seq(8,18,1)) +
+  theme_classic(base_size = 14) +
+  theme(legend.position='none')
+LAG_NAA
+ggsave(plot=LAG_NAA,"/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_naa_age_tf_rescale_v2.png")
+
+
+#calculate partial effect of age on Cre (remove effect of tissue fraction)
+lag_cho_partial <- remef(lag_cho_age_TisFrac, fix = "TissueFraction_GMWM") #does NOT remove random effects variance
+
+LAG_Cho<-ggplot(lag_dat_plot_cho, aes(x=mri_age_y, y=lag_cho_partial, na.exclude = TRUE, color=as.factor(female))) +
+  geom_point(size=1) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_cho_partial, group=as.factor(subj_id)), size = .5, show.legend = FALSE) +
+  labs(x = "Age (years)", y = "tCho (corrected for tissue fraction)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_abline(aes(intercept = fixef.lag_cho_age_TisFrac[[1]], slope = fixef.lag_cho_age_TisFrac[[2]]), size=1) + 
+  scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
+  scale_y_continuous(limits=c(0,10), breaks=seq(0,10,1)) +
+  theme_classic(base_size=14) +
+  theme(legend.position='none')
+LAG_Cho
+ggsave(plot=LAG_Cho,"/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cho_age_tf_rescale_v2.png")
+
+
+#calculate partial effect of age on Cre (remove effect of tissue fraction)
+lag_cre_partial <- remef(lag_cre_age_TisFrac, fix = "TissueFraction_GMWM") #does NOT remove random effects variance
+
+LAG_Cre<-ggplot(lag_dat_plot_Cre, aes(x=mri_age_y, y=lag_cre_partial, na.exclude = TRUE, color=as.factor(female))) +
+  geom_point(size=1) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_cre_partial, group=as.factor(subj_id)), size = .5, show.legend = FALSE) +
+  labs(x = "Age (years)", y = "tCre (corrected for tissue fraction)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_abline(aes(intercept = fixef.lag_cre_age_TisFrac[[1]], slope = fixef.lag_cre_age_TisFrac[[2]]), size=1) + 
+  scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
+  scale_y_continuous(limits=c(3,13), breaks=seq(3,13,1)) +
+  theme_classic(base_size=14) +
+  theme(legend.position =c(.8,.9), legend.background = element_rect(fill="transparent", linetype = NULL))
+LAG_Cre
+ggsave(plot=LAG_Cre,"/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cre_age_tf_rescale_v2.png")
+
+LAG_fig<-LAG_NAA + LAG_Cho + LAG_Cre + plot_layout(nrow=1) 
+LAG_fig
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/LAG_age_effects_fig_grid_viridis_v2.png", LAG_fig, width = 3000, height = 1500, units = "px")
+
 
 ```
 ##FDR Correction for multiple comparisons: final models
@@ -1815,7 +1916,7 @@ lag_subs_long<-group_by(lag_dat, subj_id) %>%
   summarise(n=n()) %>%
   filter(n > 2)
 
-length(lag_dat_long$subj_id) #52 subjects have data for >2 time points
+length(lag_subs_long$subj_id) #52 subjects have data for >2 time points
 
 #filter dataset to subjects with >2 time points
 lag_dat_long <- lag_dat %>%
@@ -1976,62 +2077,94 @@ lag_long_summary_table_all #opens in Rstudio viewer, can open from there to web 
 
 ```{r}
 #Plot NAA linear
-plot_lag_naa_tf_long<-ggplot(lag_dat_long, aes(x=mri_age_y, y=NAA_conc_molal, na.exclude = TRUE)) +
-  geom_point(aes(color=as.factor(female))) +
-  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=NAA_conc_molal, group=as.factor(subj_id), color=as.factor(female)), size = .3, show.legend = FALSE) +
-  labs(x = "Age (years)", y = "tNAA (molal)") +
-  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
-  geom_smooth(method = "lm", se = FALSE, colour = "black") + 
-  scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
-  scale_y_continuous(limits=c(0,20), breaks=seq(0,20,5)) +
-  theme_classic()
-plot_lag_naa_tf_long
-ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_naa_long_age_tf_quad.png", plot=plot_lag_naa_tf_long)
+#subset dataframe with only subjects included in NAA analysis
+lag_dat_long_naa<- lag_dat_long %>% 
+  filter(! is.na(NAA_conc_molal))
 
-#Plot Cho quadratic - scaled Y axis so effect would be visible
-plot_lag_cho_tf_quad<-ggplot(lag_dat_long, aes(x=mri_age_y, y=Cho_GPC_PCh_conc_molal, na.exclude = TRUE)) +
-  geom_point(aes(color=as.factor(female))) +
-  geom_smooth(method = "lm", se = FALSE, formula = y ~ poly(x,2), aes(x=mri_age_y, y=Cho_GPC_PCh_conc_molal, group=as.factor(subj_id), color=as.factor(female)), size = .3, show.legend = FALSE) +
-  labs(x = "Age (years)", y = "tCho (molal)") +
+#calculate partial effect tissue fraction on tNAA (remove effect of tissue fraction)
+lag_naa_age_long_partial <- remef(lag_naa_TisFrac_age_long, fix = "TissueFraction_GMWM") 
+
+plot_lag_naa_tf_long<-ggplot(lag_dat_long_naa, aes(x=mri_age_y, y=lag_naa_age_long_partial, na.exclude = TRUE)) +
+  geom_point(aes(color=as.factor(female)), size=1) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_naa_age_long_partial, group=as.factor(subj_id), color=as.factor(female)), size = .5, show.legend = FALSE) +
+  labs(x = "Age (years)", y = "tNAA (controlling for tissue fraction)") +
   scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
-  geom_smooth(method = "lm", formula = y ~ poly(x,2), se = FALSE, colour = "black") + 
+  geom_smooth(method = "lm", se = FALSE, colour = "black", size=1) + 
   scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
-  scale_y_continuous(limits=c(0,5), breaks=seq(0,5,1)) +
-  theme_classic()
+  scale_y_continuous(limits=c(8,18), breaks=seq(8,18,1)) +
+  theme_classic(base_size=12) +
+  theme(legend.position = 'none') 
+plot_lag_naa_tf_long
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_naa_long_age_tf_partial.png", plot=plot_lag_naa_tf_long)
+
+#Plot Cho quadratic 
+#subset dataframe with only subjects included in tCho analysis
+lag_dat_long_cho<- lag_dat_long %>% 
+  filter(! is.na(Cho_GPC_PCh_conc_molal))
+
+#calculate partial effect tissue fraction on tCho (remove effect of tissue fraction)
+lag_cho_age_long_partial <- remef(lag_cho_TisFrac_age_long_quad, fix = "TissueFraction_GMWM") 
+
+plot_lag_cho_tf_quad<-ggplot(lag_dat_long_cho, aes(x=mri_age_y, y=lag_cho_age_long_partial, na.exclude = TRUE)) +
+  geom_point(aes(color=as.factor(female)), size=1) +
+  geom_smooth(method = "lm", se = FALSE, formula = y ~ poly(x,2), aes(x=mri_age_y, y=lag_cho_age_long_partial, group=as.factor(subj_id), color=as.factor(female)), size = .5, show.legend = FALSE) +
+  labs(x = "Age (years)", y = "tCho (controlling for tissue fraction)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_smooth(method = "lm", formula = y ~ poly(x,2), se = FALSE, colour = "black", size=1) + 
+  scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
+  scale_y_continuous(limits=c(1,5), breaks=seq(1,5,1)) +
+  theme_classic(base_size=12) +
+  theme(legend.position = c(.8,.9), legend.background = element_rect(fill="transparent", linetype = NULL)) 
 plot_lag_cho_tf_quad
-ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cho_long_age_tf_quad.png", plot=plot_lag_cho_tf_quad)
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cho_long_age_quad_partial.png", plot=plot_lag_cho_tf_quad)
 
 #Plot Cre linear
-plot_lag_cre_tf_long<-ggplot(lag_dat_long, aes(x=mri_age_y, y=Cre_PCr_conc_molal, na.exclude = TRUE)) +
-  geom_point(aes(color=as.factor(female))) +
-  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=Cre_PCr_conc_molal, group=as.factor(subj_id), color=as.factor(female)), size = .3, show.legend = FALSE) +
-  labs(x = "Age (years)", y = "tCr (molal)") +
+#subset dataframe with only subjects included in tCre analysis
+lag_dat_long_cre<- lag_dat_long %>% 
+  filter(! is.na(Cre_PCr_conc_molal))
+
+#calculate partial effect tissue fraction on tCre (remove effect of tissue fraction)
+lag_cre_age_long_partial <- remef(lag_cre_TisFrac_age_long, fix = "TissueFraction_GMWM") 
+
+plot_lag_cre_tf_long<-ggplot(lag_dat_long_cre, aes(x=mri_age_y, y=lag_cre_age_long_partial, na.exclude = TRUE)) +
+  geom_point(aes(color=as.factor(female)),size=1) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_cre_age_long_partial, group=as.factor(subj_id), color=as.factor(female)), size = .5, show.legend = FALSE) +
+  labs(x = "Age (years)", y = "tCre (controlling for tissue fraction)") +
   scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
-  geom_smooth(method = "lm", se = FALSE, colour = "black") + 
+  geom_smooth(method = "lm", se = FALSE, colour = "black", size=1) + 
   scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
-  scale_y_continuous(limits=c(0,15), breaks=seq(0,15,5)) +
-  theme_classic()
+  scale_y_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
+  theme_classic(base_size=12) +
+  theme(legend.position = 'none')
 plot_lag_cre_tf_long
-ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cre_long_age_tf_quad.png", plot=plot_lag_cre_tf_long)
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cre_long_age_partial.png", plot=plot_lag_cre_tf_long)
 
 #Plot Glx quadratic
-plot_lag_glx_tf_quad<-ggplot(lag_dat_long, aes(x=mri_age_y, y=Glu_Gln_conc_molal, na.exclude = TRUE)) +
-  geom_point(aes(color=as.factor(female))) +
-  geom_smooth(method = "lm", se = FALSE, formula = y ~ poly(x,2), aes(x=mri_age_y, y=Glu_Gln_conc_molal, group=as.factor(subj_id), color=as.factor(female)), size = .3, show.legend = FALSE) +
-  labs(x = "Age (years)", y = "Glx (molal)") +
+#subset dataframe with only subjects included in Glx analysis
+lag_dat_long_glx<- lag_dat_long %>% 
+  filter(! is.na(Glu_Gln_conc_molal))
+
+#calculate partial effect tissue fraction on Glx (remove effect of tissue fraction)
+lag_glx_age_long_partial <- remef(lag_glx_TisFrac_age_long_quad, fix = "TissueFraction_GMWM") 
+
+plot_lag_glx_tf_quad<-ggplot(lag_dat_long_glx, aes(x=mri_age_y, y=lag_glx_age_long_partial, na.exclude = TRUE)) +
+  geom_point(aes(color=as.factor(female)), size=1) +
+  geom_smooth(method = "lm", se = FALSE, formula = y ~ poly(x,2), aes(x=mri_age_y, y=lag_glx_age_long_partial, group=as.factor(subj_id), color=as.factor(female)), size = .5, show.legend = FALSE) +
+  labs(x = "Age (years)", y = "Glx (controlling for tissue fraction)") +
   scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
-  geom_smooth(method = "lm", formula = y ~ poly(x,2), se = FALSE, colour = "black") + 
+  geom_smooth(method = "lm", formula = y ~ poly(x,2), se = FALSE, colour = "black", size=1) + 
   scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
-  scale_y_continuous(limits=c(0,30), breaks=seq(0,30,5)) +
-  theme_classic()
+  scale_y_continuous(limits=c(5,25), breaks=seq(5,25,5)) +
+  theme_classic(base_size=12)+
+  theme(legend.position= 'none')
 plot_lag_glx_tf_quad
-ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_glx_long_age_tf_quad.png", plot=plot_lag_glx_tf_quad)
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_glx_long_age_quad_partial.png", plot=plot_lag_glx_tf_quad)
 
 #gather plots in a single figure
 library(patchwork)
-lag_long_fig<-plot_lag_naa_tf_long + plot_lag_cho_tf_quad + plot_lag_cre_tf_long + plot_lag_glx_tf_quad + plot_layout(nrow=2, guides ='collect')
+lag_long_fig<-plot_lag_naa_tf_long + plot_lag_cho_tf_quad + plot_lag_cre_tf_long + plot_lag_glx_tf_quad + plot_layout(nrow=2)
 lag_long_fig
-ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/results_lag_long_n52.png", lag_long_fig, width = 2000, height = 1800, units = "px")
+ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/results_lag_long_n52_partial.png", lag_long_fig, width = 2000, height = 1800, units = "px")
 
 
 ```
