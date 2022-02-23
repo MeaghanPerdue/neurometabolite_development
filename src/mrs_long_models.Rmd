@@ -164,7 +164,7 @@ describe(acg_dat)
 #re-run descriptives afer excluding 2 subjects for poor coregistration
 acg_dat_tf<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n112_tissuefraction.csv")
 #convert subj_id variable to "character" type for later merging
-acg_dat_tf$subj_id <- as.character(acg_dat_tf$subj_id)
+#acg_dat_tf$subj_id <- as.character(acg_dat_tf$subj_id)
 
 acg_sub_sex <- acg_dat_tf %>%
   dplyr::select(subj_id, female)
@@ -175,16 +175,30 @@ sum(acg_unique_subs$female)
 describe(acg_dat_tf)
 
 #LAG - count individual subject N and N of females
-lag_sub_sex <- lag_dat %>%
+lag_dat_tf<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n319_tissuefraction.csv")
+
+lag_sub_sex <- lag_dat_tf %>%
   dplyr::select(subj_id, female)
 lag_unique_subs<-unique(lag_sub_sex)
 length(lag_unique_subs$subj_id)
 sum(lag_unique_subs$female)
 
-describe(lag_dat)
+describe(lag_dat_tf)
+
+#merge ACG & LAG datasets
+all_dat<-bind_rows(acg_dat_tf, lag_dat_tf)
+
+#add SES data
+
+#parent 1 data
+ses_dat<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/Preschool_demographics_Visit1_Feb2022.csv")
+colnames(ses_dat)[1]<-"subj_id"
+
+all_dat<-left_join(all_dat, ses_dat, by = "subj_id")
+
+describe(all_dat)
 
 #Calculate total Ns from both datasets combined
-all_dat<-bind_rows(acg_dat_tf, lag_dat)
 length(unique(all_dat$File_ID))
 length(unique(all_dat$subj_id))
 all_sub_sex <- all_dat %>%
@@ -192,7 +206,14 @@ all_sub_sex <- all_dat %>%
 all_unique_subs<-unique(all_sub_sex)
 sum(all_unique_subs$female)
 
-describe(all_dat)
+#reduce dataframe to single row per participant
+dat<-all_dat %>% 
+  select("subj_id", "female", "mom_highest_schooling", "dad_highest_schooling", "dm_income") %>%
+  distinct()
+
+describe(dat)
+sum(dat$female)
+
 ```
 
 
