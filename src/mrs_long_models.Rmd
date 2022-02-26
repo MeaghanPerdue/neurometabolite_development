@@ -2344,8 +2344,111 @@ lag_glx_TisFrac_age_gamm <- gam(Glu_Gln_conc_molal ~ mri_age_y + TissueFraction_
 summary(lag_glx_TisFrac_age_gamm)
 
 
+```
+
+##Calculate groupwise % change for all models
+```{r}
+#read data
+acg_dat_tf<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n112_tissuefraction.csv")
+
+lag_dat<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n319_tissuefraction.csv")
+
+#acg models
+acg_naa_age <- lmer(NAA_conc_molal ~ mri_age_y + (1 | subj_id), data=acg_dat_tf, REML=FALSE)
+acg_cho_age <- lmer(Cho_GPC_PCh_conc_molal ~ mri_age_y + (1 | subj_id), data=acg_dat_tf, REML=FALSE)
+acg_cre_age <- lmer(Cre_PCr_conc_molal ~ mri_age_y + (1 | subj_id), data=acg_dat_tf, REML=FALSE)
+acg_glx_age <- lmer(Glu_Gln_conc_molal ~ mri_age_y + (1 | subj_id), data=acg_dat_tf, REML=FALSE)
+acg_ins_age <- lmer(Ins_conc_molal ~ mri_age_y + (1 | subj_id), data=acg_dat_tf, REML=FALSE)
+
+#lag models
+lag_naa_age_TisFrac <- lmer(NAA_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
+lag_cho_age_TisFrac <- lmer(Cho_GPC_PCh_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
+lag_cre_age_TisFrac <- lmer(Cre_PCr_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
+lag_glx_age_TisFrac <- lmer(Glu_Gln_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
+lag_ins_age_TisFrac <- lmer(Ins_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=lag_dat, REML=FALSE)
+
+#lag long models
+lag_naa_TisFrac_age_long <-lmer(NAA_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=lag_dat_long, REML=FALSE)
+lag_cre_TisFrac_age_long <-lmer(Cre_PCr_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=lag_dat_long, REML=FALSE)
+lag_ins_TisFrac_age_long <-lmer(Ins_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=lag_dat_long, REML=FALSE)
+lag_cho_TisFrac_age_long_quad <-lmer(Cho_GPC_PCh_conc_molal ~ mri_age_y + TissueFraction_GMWM + mri_age_y2 + (1 | subj_id), data=lag_dat_long, REML=FALSE)
+lag_glx_TisFrac_age_long_quad <-lmer(Glu_Gln_conc_molal ~ mri_age_y + TissueFraction_GMWM + mri_age_y2 + (1 | subj_id), data=lag_dat_long, REML=FALSE)
+
+
+#create function to calculate predicted total percent change 
+tot_pct <- function(model, a, b) {
+  output<- ((fixef(model)[1] + fixef(model)[2]*b) - (fixef(model)[1] + fixef(model)[2]*a))/(fixef(model)[1] + fixef(model)[2]*a)*100
+  return(output)
+}
+
+#test it
+tot_pct(model = acg_naa_age, a=2, b=8)
+
+#create function to calculate predicted annualized percent change
+ann_pct <- function(model, a, b) {
+  output<- ((fixef(model)[1] + fixef(model)[2]*b) - (fixef(model)[1] + fixef(model)[2]*a))/(fixef(model)[1] + fixef(model)[2]*a)/(b-a)*100
+  return(output)
+}
+#test it
+ann_pct(model = acg_naa_age, a=2, b=8)
+
+
+#run percent change functions on acg models, spanning ages 2-8 and write to dataframe
+acg_models<-c(acg_naa_age, acg_cho_age, acg_cre_age, acg_glx_age, acg_ins_age)
+acg_model_names<-c("NAA","Cho", "Cre", "Glx", "Ins")
+acg_tot_pct<-lapply(acg_models, tot_pct, a=2, b=8)
+acg_ann_pct<-lapply(acg_models, ann_pct, a=2, b=8)
+
+acg_pct.df<-data.frame(acg_model_names, unlist(acg_tot_pct), unlist(acg_ann_pct))
+
+write.csv(acg_pct.df,"/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_pct_chg.csv", row.names=FALSE)
+
+#run percent change functions on lag models, spanning ages 2-12 and write to dataframe
+lag_models<-c(lag_naa_age_TisFrac, lag_cho_age_TisFrac, lag_cre_age_TisFrac, lag_glx_age_TisFrac, lag_ins_age_TisFrac)
+lag_model_names<-c("NAA","Cho", "Cre", "Glx", "Ins")
+lag_tot_pct<-lapply(lag_models, tot_pct, a=2, b=12)
+lag_ann_pct<-lapply(lag_models, ann_pct, a=2, b=12)
+
+lag_pct.df<-data.frame(lag_model_names, unlist(lag_tot_pct), unlist(lag_ann_pct))
+
+write.csv(lag_pct.df,"/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_pct_chg.csv", row.names=FALSE)
+
+#create percent change formula for quadratic functions
+tot_pct_quad <- function(model, a, b) {
+  output<- ((fixef(model)[1] + fixef(model)[2]*b +fixef(model)[4]*b^2) - (fixef(model)[1] + fixef(model)[2]*a + fixef(model)[4]*a^2))/(fixef(model)[1] + fixef(model)[2]*a +fixef(model)[4]*a^2)*100
+  return(output)
+}
+
+ann_pct_quad <- function(model, a, b) {
+  output<- ((fixef(model)[1] + fixef(model)[2]*b +fixef(model)[4]*b^2) - (fixef(model)[1] + fixef(model)[2]*a + fixef(model)[4]*a^2))/(fixef(model)[1] + fixef(model)[2]*a +fixef(model)[4]*a^2)/(b-a)*100
+  return(output)
+}
+
+#test it
+tot_pct_quad(model = lag_cho_TisFrac_age_long_quad, a=2, b=12)
+
+#run percent change on lag longitudinal models, spanning ages 2-12 and write to dataframe
+long_models_lin<-c(lag_naa_TisFrac_age_long, lag_cre_TisFrac_age_long, lag_ins_TisFrac_age_long)
+long_tot_pct<-lapply(long_models_lin, tot_pct, a=2, b=12)
+long_ann_pct<-lapply(long_models_lin, ann_pct, a=2, b=12)
+
+long_models_quad<-c(lag_cho_TisFrac_age_long_quad, lag_glx_TisFrac_age_long_quad)
+quad_tot_pct<-lapply(long_models_quad, tot_pct_quad, a=2, b=12)
+quad_ann_pct<-lapply(long_models_quad, ann_pct_quad, a=2, b=12)
+
+long_model_names<-c("NAA", "Cre", "Ins", "Cho", "Glx")
+long_tot_pct_all<-c(long_tot_pct, quad_tot_pct)
+long_ann_pct_all<-c(long_ann_pct, quad_ann_pct)
+long_pct.df<-data.frame(long_model_names, unlist(long_tot_pct_all), unlist(long_ann_pct_all))
+
+write.csv(long_pct.df,"/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/long_pct_chg.csv", row.names=FALSE)
+
+#find inflection points (slope = 0)
+quad<-(fixef(model)[1] + fixef(model)[2]*b +fixef(model)[4]*b^2)
+x<- -fixef(model)[2]/(fixef(model)[4]*2)
+
+model<-lag_naa_TisFrac_age_long
 
 
 ```
-
 
