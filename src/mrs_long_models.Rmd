@@ -2248,6 +2248,25 @@ plot_lag_cho_tf_quad<-ggplot(lag_dat_long_cho, aes(x=mri_age_y, y=lag_cho_age_lo
 plot_lag_cho_tf_quad
 ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cho_long_age_quad_partial.png", plot=plot_lag_cho_tf_quad)
 
+#find min value and age when it occurs
+#create formula for fit line
+fit_cho<-lm(lag_cho_age_long_partial ~ poly(mri_age_y,2), data=lag_dat_long_cho)
+lag_dat_long_cho$predict<-predict(fit_cho)
+
+#view it to check
+plot_lag_cho_tf_quad +
+  geom_line(aes(y=predict), data=lag_dat_long_cho, linetype = 2, size=3, col="red")
+
+#min Y value
+min(lag_dat_long_cho$predict)
+#plot it
+plot_lag_cho_tf_quad +
+  geom_hline(yintercept=min(lag_dat_long_cho$predict), linetype = 2)
+
+#occurs at age
+lag_dat_long_cho$mri_age_y[which.min(lag_dat_long_cho$predict)]
+
+
 #Plot Cre linear
 #subset dataframe with only subjects included in tCre analysis
 lag_dat_long_cre<- lag_dat_long %>% 
@@ -2289,6 +2308,24 @@ plot_lag_glx_tf_quad<-ggplot(lag_dat_long_glx, aes(x=mri_age_y, y=lag_glx_age_lo
   theme(legend.position= 'none')
 plot_lag_glx_tf_quad
 ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_glx_long_age_quad_partial.png", plot=plot_lag_glx_tf_quad)
+
+#find max value and age when it occurs
+#create formula for fit line
+fit_glx<-lm(lag_glx_age_long_partial ~ poly(mri_age_y,2), data=lag_dat_long_glx)
+lag_dat_long_glx$predict<-predict(fit_glx)
+
+#view it to check
+plot_lag_glx_tf_quad +
+  geom_line(aes(y=predict), data=lag_dat_long_glx, linetype = 2, size=3, col="red")
+
+#max Y value
+max(lag_dat_long_glx$predict)
+#plot it
+plot_lag_glx_tf_quad +
+  geom_hline(yintercept=max(lag_dat_long_glx$predict), linetype = 2)
+
+#occurs at age
+lag_dat_long_glx$mri_age_y[which.max(lag_dat_long_glx$predict)]
 
 #gather plots in a single figure
 library(patchwork)
@@ -2443,12 +2480,14 @@ long_pct.df<-data.frame(long_model_names, unlist(long_tot_pct_all), unlist(long_
 
 write.csv(long_pct.df,"/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/long_pct_chg.csv", row.names=FALSE)
 
-#find inflection points (slope = 0)
+#find min/max points
 quad<-(fixef(model)[1] + fixef(model)[2]*b +fixef(model)[4]*b^2)
-x<- -fixef(model)[2]/(fixef(model)[4]*2)
+max<- fixef(model)[1] - (fixef(model)[2])^2/4*fixef(model)[4]
 
-model<-lag_naa_TisFrac_age_long
+model<-lag_glx_TisFrac_age_long_quad
+-1(fixef(model)[2])/((fixef(model)[4])*2)
 
+-.17367/(.00838*2)
 
 ```
 
