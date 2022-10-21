@@ -719,7 +719,7 @@ lag_cre<-ggplot(lag_dat_plot_Cre, aes(x=mri_age_y, y=lag_cre_partial, na.exclude
   scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
   geom_abline(aes(intercept = fixef.lag_cre_age_TisFrac[[1]], slope = fixef.lag_cre_age_TisFrac[[2]]), size=1) + 
   scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
-  scale_y_continuous(limits=c(4,12), breaks=seq(4,12,1)) +
+  scale_y_continuous(limits=c(3,11), breaks=seq(3,11,1)) +
   theme_classic(base_size=14) +
   theme(legend.position = c(.9,.95), legend.title = element_blank(),legend.background = element_blank(), legend.box.background = element_rect(colour = "black"), legend.text = element_text(size=8), legend.key.height = unit(.3, 'cm'), legend.key.width=unit(.3, 'cm'), legend.spacing.y = unit(0, "pt"))
 lag_cre
@@ -1466,7 +1466,7 @@ lag_naa_long_slides<- plot_lag_naa_tf_long +
     legend.box.background = element_rect(fill='transparent') #transparent legend panel
   )
 
-
+#pull plots into figure
 naa_fig<-acc_naa_slides + lag_naa_slides + lag_naa_long_slides + 
   plot_layout(widths = c(.75, 1,1), guides = "collect") & theme(legend.position = "right", plot.background = element_rect(fill='transparent', color=NA), text=element_text(color="lightgrey"), axis.text=element_text(color="lightgrey"), axis.line=element_line(color="lightgrey"), axis.ticks=element_line(color="lightgrey"))
 naa_fig
@@ -1504,11 +1504,102 @@ lag_cho_long_slides<- plot_lag_cho_tf_quad +
     legend.box.background = element_rect(fill='transparent') #transparent legend panel
   )
 
+#pull plots into figure
 cho_fig<-acc_cho_slides + lag_cho_slides + lag_cho_long_slides + 
   plot_layout(widths = c(.75, 1,1), guides = "collect") & theme(legend.position = "right", plot.background = element_rect(fill='transparent', color=NA), text=element_text(color="lightgrey"), axis.text=element_text(color="lightgrey"), axis.line=element_line(color="lightgrey"), axis.ticks=element_line(color="lightgrey"))
 cho_fig
 ggsave('/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/cho_fig_4slides_light.png', cho_fig, width = 3000, height = 1500, units = "px", bg='transparent')
 
+
+#make plot backgrounds transparent
+lag_cre_slides<-ggplot(lag_dat_plot_Cre, aes(x=mri_age_y, y=lag_cre_partial, na.exclude = TRUE, color=as.factor(female))) +
+  geom_point(size=1) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_cre_partial, group=as.factor(subj_id)), size = .5, show.legend = FALSE) +
+  labs(x = "Age (years)", y = "tCre (corrected for tissue fraction)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_abline(aes(intercept = fixef.lag_cre_age_TisFrac[[1]], slope = fixef.lag_cre_age_TisFrac[[2]]), size=1) + 
+  scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
+  scale_y_continuous(limits=c(3,11), breaks=seq(3,11,1)) +
+  theme_classic(base_size=14) +
+   ggtitle("LTP") + 
+   theme(
+    legend.position="right",
+    legend.title = element_blank(),
+    legend.background = element_rect(fill='transparent'), 
+    legend.box.background = element_rect(fill='transparent', linetype='blank'),
+    panel.background = element_rect(fill='transparent'), #transparent panel bg
+    plot.background = element_rect(fill='transparent', color=NA), #transparent plot bg
+  )
+lag_cre_slides
+
+lag_cre_long_slides<-ggplot(lag_dat_long_cre, aes(x=mri_age_y, y=lag_cre_age_long_partial, na.exclude = TRUE)) +
+  geom_point(aes(color=as.factor(female)),size=1, show.legend = FALSE) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_cre_age_long_partial, group=as.factor(subj_id), color=as.factor(female)), size = .5, show.legend = FALSE) +
+  labs(x = "Age (years)", y = "tCre (controlling for tissue fraction)") +
+  scale_color_viridis(discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_smooth(method = "lm", se = FALSE, colour = "black", size=1) + 
+  scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
+  scale_y_continuous(limits=c(3,11), breaks=seq(3,11,1)) +
+  ggtitle("LTP Longitudinal") +
+  theme_classic(base_size=14) +
+  theme(legend.position = "right", 
+        legend.title = element_blank(),
+        legend.background = element_rect(fill='transparent'), 
+        legend.box.background = element_rect(fill='transparent', linetype='blank'),
+        panel.background = element_rect(fill='transparent'), #transparent panel bg
+        plot.background = element_rect(fill='transparent', color=NA)) #transparent plot bg
+lag_cre_long_slides
+  
+
+cre_fig<-lag_cre_slides + lag_cre_long_slides + 
+  plot_layout(guides = "collect") & theme(legend.position = "right", legend.background=element_rect(linetype="blank"),legend.title = element_text(), plot.background = element_rect(fill='transparent', color=NA), text=element_text(color="lightgrey"), axis.text=element_text(color="lightgrey"), axis.line=element_line(color="lightgrey"), axis.ticks=element_line(color="lightgrey"))
+cre_fig
+ggsave('/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/cre_fig_4slides_light.png', cre_fig, width = 2200, height = 1500, units = "px", bg='transparent')
+
+
+#make plot background transparent
+lag_glx_long_slides<- plot_lag_glx_tf_quad +
+  ggtitle("LTP Longitudinal") +
+  theme(
+    legend.position="right",
+    panel.background = element_rect(fill='transparent'), #transparent panel bg
+    plot.background = element_rect(fill='transparent', color=NA), 
+    text=element_text(color="lightgrey"), 
+    axis.text=element_text(color="lightgrey"), 
+    axis.line=element_line(color="lightgrey"), 
+    axis.ticks=element_line(color="lightgrey"), #transparent plot bg
+    legend.box.background = element_rect(fill='transparent', linetype="blank"), #transparent legend bg
+  )
+lag_glx_long_slides
+
+ggsave('/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/glx_long_fig_4slides_light.png', lag_glx_long_slides, width = 1500, height = 1500, units = "px", bg='transparent')
+
+#make plot background transparent
+acc_ins_slides<-ggplot(acg_dat, aes(x=mri_age_y, y=Ins_conc_molal,color=as.factor(female))) + 
+  geom_point(size=1) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=Ins_conc_molal, group=as.factor(subj_id)), size = .5, show.legend = FALSE) +
+  labs(x = "Age (years)", y = "Ins (molal)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_abline(aes(intercept = fixef.acg_ins[[1]], slope= fixef.acg_ins[[2]]), size = 1) + 
+  scale_x_continuous(limits=c(2,8), breaks=seq(2,8,1)) +
+  scale_y_continuous(limits=c(1,12), breaks=seq(1,12,1)) +
+  ggtitle("ACC") +
+  theme_classic(base_size = 14) +
+  theme(
+    legend.position = "right",
+    legend.title = element_text(),
+    panel.background = element_rect(fill='transparent'), #transparent panel bg
+    plot.background = element_rect(fill='transparent', color=NA), 
+    text=element_text(color="lightgrey"), 
+    axis.text=element_text(color="lightgrey"), 
+    axis.line=element_line(color="lightgrey"), 
+    axis.ticks=element_line(color="lightgrey"), #transparent plot bg
+    legend.box.background = element_rect(fill='transparent', linetype="blank"), #transparent legend bg
+    legend.background = element_rect(fill='transparent', linetype="blank") #transparent legend bg
+    )
+acc_ins_slides
+
+ggsave('/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/ins_acc_fig_4slides_light.png', acc_ins_slides, width = 1500, height = 1500, units = "px", bg='transparent')
 
 
 ```
