@@ -25,7 +25,7 @@ options(scipen=999)
 select metabolite columns from LCM outputs, add participant demographics, crease tissue fraction variable
 
 ```{r}
-acg_lcm <- read.csv("/Volumes/catherine_team/mvperdue/preschool/mrs/data_acg/Output_12-Sep-2022/ACG_LCM_CorrectedTable_09-12-2022-10-39.csv")
+acg_lcm <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/ACC_LCM_CorrectedTable_10-24-2022-14-30.csv")
 
 anyDuplicated(acg_lcm$File_ID) #check for duplicated values
 
@@ -47,13 +47,13 @@ acg_dat$subj_id <- as.character(acg_dat$subj_id)
 acg_dat$TissueFraction_GMWM <- acg_dat$fGM/(acg_dat$fGM + acg_dat$fWM)
 
 #add QC metrics to df
-acg_qc<-read.csv("/Volumes/catherine_team/mvperdue/preschool/mrs/data_acg/SE_PRESS_QC_Metrics_acg.csv")
+acg_qc<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/SE_PRESS_QC_Metrics_acg.csv")
 
 acg_dat<-left_join(acg_dat, acg_qc, by = "File_ID")
 
-write.csv(acg_dat, "/Volumes/catherine_team/mvperdue/preschool/mrs/data_acg/Output_12-Sep-2022/acg_data_molal_n114.csv", row.names = FALSE)
+write.csv(acg_dat, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_n114_Oct2022.csv", row.names = FALSE)
 
-lag_lcm <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/Output_16-Sep-2022/LAG_LCM_CorrectedTable_09-16-2022-11-19.csv")
+lag_lcm <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/LTP_LCM_CorrectedTable_10-24-2022-15-00.csv")
 
 lag_molal <- lag_lcm %>%
   dplyr::select(File_ID, fGM, fWM, fCSF, NAA_conc_molal, Cre_PCr_conc_molal, Cho_GPC_PCh_conc_molal, Ins_conc_molal, Glu_conc_molal, Glu_Gln_conc_molal)
@@ -71,7 +71,7 @@ lag_qc<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data
 
 lag_dat<-left_join(lag_dat, lag_qc, by = "File_ID")
 
-write.csv(lag_dat, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/Output_16-Sep-2022/lag_data_molal_n320.csv", row.names = FALSE)
+write.csv(lag_dat, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_n320_Oct2022.csv", row.names = FALSE)
 
 ```
 ##Check data distribution & outliers
