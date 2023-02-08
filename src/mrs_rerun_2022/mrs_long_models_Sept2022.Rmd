@@ -25,7 +25,7 @@ options(scipen=999)
 select metabolite columns from LCM outputs, add participant demographics, crease tissue fraction variable
 
 ```{r}
-acg_lcm <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/ACC_LCM_CorrectedTable_10-24-2022-14-30.csv")
+acg_lcm <- read.csv("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/data/ACC_LCM_CorrectedTable_10-24-2022-14-30.csv")
 
 anyDuplicated(acg_lcm$File_ID) #check for duplicated values
 
@@ -36,7 +36,7 @@ acg_molal <- acg_lcm %>%
   dplyr::select(File_ID, fGM, fWM, fCSF, NAA_conc_molal, Cre_PCr_conc_molal, Cho_GPC_PCh_conc_molal, Ins_conc_molal, Glu_conc_molal, Glu_Gln_conc_molal)
 #note that NAA_conc_molal is NAA+NAAG based on LCM_Met_Quant script
 
-acg_demo <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_analysis_subs.csv")
+acg_demo <- read.csv("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_analysis_subs.csv")
 
 acg_dat <- left_join(acg_demo, acg_molal, by = "File_ID")
 
@@ -47,18 +47,18 @@ acg_dat$subj_id <- as.character(acg_dat$subj_id)
 acg_dat$TissueFraction_GMWM <- acg_dat$fGM/(acg_dat$fGM + acg_dat$fWM)
 
 #add QC metrics to df
-acg_qc<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/SE_PRESS_QC_Metrics_acg.csv")
+acg_qc<-read.csv("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/data/SE_PRESS_QC_Metrics_acg.csv")
 
 acg_dat<-left_join(acg_dat, acg_qc, by = "File_ID")
 
-write.csv(acg_dat, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_n114_Oct2022.csv", row.names = FALSE)
+write.csv(acg_dat, "/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_n114_Oct2022.csv", row.names = FALSE)
 
-lag_lcm <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/LTP_LCM_CorrectedTable_10-24-2022-15-00.csv")
+lag_lcm <- read.csv("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/data/LTP_LCM_CorrectedTable_10-24-2022-15-00.csv")
 
 lag_molal <- lag_lcm %>%
   dplyr::select(File_ID, fGM, fWM, fCSF, NAA_conc_molal, Cre_PCr_conc_molal, Cho_GPC_PCh_conc_molal, Ins_conc_molal, Glu_conc_molal, Glu_Gln_conc_molal)
 
-lag_demo <- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_analysis_subs.csv")
+lag_demo <- read.csv("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_analysis_subs.csv")
 
 lag_dat <- left_join(lag_demo, lag_molal, by = "File_ID")
 lag_dat$subj_id<-as.character(lag_dat$subj_id) #make subj_id character type
@@ -67,11 +67,11 @@ lag_dat$subj_id<-as.character(lag_dat$subj_id) #make subj_id character type
 lag_dat$TissueFraction_GMWM <- lag_dat$fGM/(lag_dat$fGM + lag_dat$fWM)
 
 #add QC metrics
-lag_qc<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/SE_PRESS_QC_Metrics_lag.csv")
+lag_qc<-read.csv("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/data/SE_PRESS_QC_Metrics_lag.csv")
 
 lag_dat<-left_join(lag_dat, lag_qc, by = "File_ID")
 
-write.csv(lag_dat, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_n320_Oct2022.csv", row.names = FALSE)
+write.csv(lag_dat, "/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_n320_Oct2022.csv", row.names = FALSE)
 
 ```
 ##Check data distribution & outliers
@@ -133,7 +133,7 @@ acg_TisFrac_age <- lmer(TissueFraction_GMWM ~ mri_age_y + (1 | subj_id), data=ac
 summary(acg_TisFrac_age)
 #not sig.
 
-write.csv(acg_dat, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n112_Oct2022.csv", row.names = FALSE)
+write.csv(acg_dat, "/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n112_Oct2022.csv", row.names = FALSE)
 ```
 LAG
 ```{r}
@@ -180,7 +180,7 @@ plot_tf<-ggplot(lag_dat, aes(TissueFraction_GMWM)) +
   geom_boxplot()
 rosnerTest(lag_dat$TissueFraction_GMWM, k = 5) #no outliers
 
-write.csv(lag_dat, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n318_Octt2022.csv", row.names = FALSE)
+write.csv(lag_dat, "/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n318_Oct2022.csv", row.names = FALSE)
 ```
 
 ##Descriptive stats
@@ -202,7 +202,7 @@ acg_desc<-acg_dat %>%
 acg_metab_desc<-filter(acg_desc, row.names(acg_desc) %in% c("NAA_conc_molal", "Cho_GPC_PCh_conc_molal", "Cre_PCr_conc_molal", "Glu_Gln_conc_molal", "Ins_conc_molal", "TissueFraction_GMWM"))
 
 #write to csv
-write.csv(acg_metab_desc, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_metab_descriptives_Oct2022.csv")
+write.csv(acg_metab_desc, "/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_metab_descriptives_Oct2022.csv")
 
 
 
@@ -223,7 +223,7 @@ lag_desc<-lag_dat %>%
 lag_metab_desc<-filter(lag_desc, row.names(lag_desc) %in% c("NAA_conc_molal", "Cho_GPC_PCh_conc_molal", "Cre_PCr_conc_molal", "Glu_Gln_conc_molal", "Ins_conc_molal", "TissueFraction_GMWM"))
 
 #write to csv
-write.csv(lag_metab_desc, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_metab_descriptives_n318_Oct2022.csv")
+write.csv(lag_metab_desc, "/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_metab_descriptives_n318_Oct2022.csv")
 
 #convert subj_id variable to "character" type 
 acg_dat$subj_id <- as.character(acg_dat$subj_id)
@@ -235,7 +235,7 @@ all_dat<-bind_rows(acg_dat, lag_dat)
 #add SES data
 
 #parent 1 data
-ses_dat<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/Preschool_demographics_Visit1_Feb2022.csv")
+ses_dat<-read.csv("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/Preschool_demographics_Visit1_Feb2022.csv")
 colnames(ses_dat)[1]<-"subj_id"
 ses_dat$subj_id<- as.character(ses_dat$subj_id)
 
@@ -401,7 +401,7 @@ fdr_table_acg<-data.frame(model_names, p_acg)
 fdr_table_acg$p_fdr<-p.adjust(p_acg, method = "fdr", n=length(p_acg))
 colnames(fdr_table_acg)<- c("Metabolite", "p, unc.", "p, FDR")
 
-write.csv(fdr_table_acg, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/fdr_table_acg_age.csv")
+write.csv(fdr_table_acg, "/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/fdr_table_acg_age.csv")
 ```
 ##Print model summaries 
 Print formatted model summaries and tables using report and sjplot package
@@ -412,6 +412,18 @@ library(report) #for text summaries
 #create html summary table for all models ACG
 acg_summary_table_all<-tab_model(acg_naa_age, acg_cre_age, acg_cho_age, acg_ins_age, acg_glx_age, show.std = TRUE, show.re.var=FALSE, show.icc = FALSE, show.r2=FALSE, dv.labels = c("tNAA (molal)", "tCr (molal)", "tCho (molal)", "Ins (molal)", "Glx (molal)"), pred.labels = c("(Intercept)", "Age (years)"))
 acg_summary_table_all #opens in Rstudio viewer, can open from there to web browser and save as PDF or whatever
+
+#check bootstrap CIs
+acg_summary_table_naa_bootstrap<-tab_model(acg_naa_age, bootstrap = TRUE)
+acg_summary_table_naa_bootstrap #opens in Rstudio viewer, can open from there to web browser and save as PDF or whatever
+
+acg_summary_table_cho_bootstrap<-tab_model(acg_cho_age, bootstrap = TRUE)
+acg_summary_table_cho_bootstrap #opens in Rstudio viewer, can open from there to web browser and save as PDF 
+
+acg_summary_table_cre_bootstrap<-tab_model(acg_cre_age, bootstrap = TRUE)
+acg_summary_table_cre_bootstrap
+
+# ^ these are all very similar to the default method, so sticking with defaults
 
 #output text summaries for ACG models
 report(acg_naa_age)
@@ -435,12 +447,13 @@ acc_naa<-ggplot(acg_dat, aes(x=mri_age_y, y=NAA_conc_molal,color=as.factor(femal
   geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=NAA_conc_molal, group=as.factor(subj_id)), size = .5, show.legend = FALSE) +
   geom_abline(aes(intercept = fixef.acg_naa[[1]], slope= fixef.acg_naa[[2]]), size=1) + 
   scale_x_continuous(limits=c(2,8), breaks=seq(2,8,1)) +
-  scale_y_continuous(limits=c(11,19), breaks=seq(11,19,1)) +
+  scale_y_continuous(limits=c(12,20), breaks=seq(12,20,1)) +
+  annotate(geom = "text", x = 7.75, y = 16.75, label = "**", size= 10) +
   theme_classic(base_size = 14) +
-  theme(legend.position='none') 
+  theme(legend.position = 'none') 
 acc_naa
 
-ggsave(plot=acc_naa, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_naa_age_oct2022.png")
+ggsave(plot=acc_naa, "/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_naa_age_oct2022.png")
 
 #Cho
 #pull intercept and slope from model for regression line
@@ -455,11 +468,12 @@ acc_cho<-ggplot(acg_dat, aes(x=mri_age_y, y=Cho_GPC_PCh_conc_molal,color=as.fact
   geom_abline(aes(intercept = fixef.acg_cho[[1]], slope= fixef.acg_cho[[2]]), size=1) + 
   scale_x_continuous(limits=c(2,8), breaks=seq(2,8,1)) +
   scale_y_continuous(limits=c(1,4), breaks=seq(1,4,1)) +
+  annotate(geom = "text", x = 7.75, y = 2, label = "**", size= 10) +
   theme_classic(base_size = 14) +
   theme(legend.position='none') 
 acc_cho
 
-ggsave(plot=acc_cho,"/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_cho_age_oct2022.png")
+ggsave(plot=acc_cho,"/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_cho_age_oct2022.png")
 
 ```
 
@@ -472,22 +486,78 @@ fixef.acg_ins<-fixef(acg_ins_age)
 acc_ins<-ggplot(acg_dat, aes(x=mri_age_y, y=Ins_conc_molal,color=as.factor(female))) + 
   geom_point(size=1) +
   geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=Ins_conc_molal, group=as.factor(subj_id)), size = .5, show.legend = FALSE) +
-  labs(x = "Age (years)", y = "Ins (mmol/kg)") +
+  labs(x = "Age (years)", y = "mI (mmol/kg)") +
   scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
   geom_abline(aes(intercept = fixef.acg_ins[[1]], slope= fixef.acg_ins[[2]]), size = 1) + 
   scale_x_continuous(limits=c(2,8), breaks=seq(2,8,1)) +
-  scale_y_continuous(limits=c(1,12), breaks=seq(1,12,1)) +
+  scale_y_continuous(limits=c(1,12), breaks=seq(1,12,2)) +
+  annotate(geom = "text", x = 7.75, y =7, label = "*", size= 10) +
   theme_classic(base_size = 14) +
-  theme(legend.position = c(.9,.95), legend.title = element_blank(),legend.background = element_blank(), legend.box.background = element_rect(colour = "black"), legend.text = element_text(size=8), legend.key.height = unit(.3, 'cm'), legend.key.width=unit(.3, 'cm'), legend.spacing.y = unit(0, "pt"))
+  theme(legend.position = c(.9,.95), legend.title = element_blank(),legend.background = element_blank(), legend.box.background = element_rect(colour = "black"), legend.text = element_text(size=14), legend.key.height = unit(.3, 'cm'), legend.key.width=unit(.3, 'cm'), legend.spacing.y = unit(0, "pt")) 
 acc_ins
-ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_ins_age_oct2022.png")
+ggsave("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_ins_age_oct2022.png")
+```
 
+## Add plots for non-sig metabolites (Cr & Glx)
+per reviewer request
+```{r}
+#Cr
+#pull intercept and slope from model for regression line
+fixef.acg_cr<-fixef(acg_cre_age)
+
+acc_cr<-ggplot(acg_dat, aes(x=mri_age_y, y=Cre_PCr_conc_molal,color=as.factor(female))) + 
+  geom_point(size=1) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=Cre_PCr_conc_molal, group=as.factor(subj_id)), size = .5, show.legend = FALSE) +
+  labs(x = "Age (years)", y = "tCr (mmol/kg)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_abline(aes(intercept = fixef.acg_cr[[1]], slope= fixef.acg_cr[[2]]), size = 1) + 
+  scale_x_continuous(limits=c(2,8), breaks=seq(2,8,1)) +
+  scale_y_continuous(limits=c(10,16), breaks=seq(10,16,1)) +
+  theme_classic(base_size = 14) +
+  theme(legend.position = c(.9,.95), legend.title = element_blank(),legend.background = element_blank(), legend.box.background = element_rect(colour = "black"), legend.text = element_text(size=14), legend.key.height = unit(.3, 'cm'), legend.key.width=unit(.3, 'cm'), legend.spacing.y = unit(0, "pt")) 
+acc_cr
+
+ggsave(plot = acc_cr, "/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_cre_age_oct2022.png")
+
+
+#Glx
+#pull intercept and slope from model for regression line
+fixef.acg_glx<-fixef(acg_glx_age)
+
+acc_glx<-ggplot(acg_dat, aes(x=mri_age_y, y=Glu_Gln_conc_molal,color=as.factor(female))) + 
+  geom_point(size=1) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=Glu_Gln_conc_molal, group=as.factor(subj_id)), size = .5, show.legend = FALSE) +
+  labs(x = "Age (years)", y = "Glx (mmol/kg)") +
+  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_abline(aes(intercept = fixef.acg_glx[[1]], slope= fixef.acg_glx[[2]]), size = 1) + 
+  scale_x_continuous(limits=c(2,8), breaks=seq(2,8,1)) +
+  scale_y_continuous(limits=c(19,35), breaks=seq(19,35,2)) +
+  theme_classic(base_size = 14) +
+  theme(legend.position = c(.9,.95), legend.title = element_blank(),legend.background = element_blank(), legend.box.background = element_rect(colour = "black"), legend.text = element_text(size=14), legend.key.height = unit(.3, 'cm'), legend.key.width=unit(.3, 'cm'), legend.spacing.y = unit(0, "pt")) 
+acc_glx
+
+ggsave(plot = acc_glx, "/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_glx_age_oct2022.png")
+
+```
+
+Join ACC plots into figure
+```{r}
 # Join ACC plots in a single figure (NAA and Cho only)
 library(patchwork)
 acc_fig<-acc_naa + acc_cho + acc_ins + plot_layout(nrow=1) 
 #+ plot_annotation(title = 'Relationships between age and metabolite concentrations in ACC')
 acc_fig
-ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/manuscript/figures/acc_naa_cho_ins_age_fig_oct2022.png", acc_fig, width = 3000, height = 1500, units = "px")
+ggsave("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/manuscript/figures/acc_naa_cho_ins_age_fig_oct2022_horiz.png", acc_fig, width = 3000, height = 1000, units = "px")
+
+acc_fig_v<-acc_naa + acc_cho + acc_ins + plot_layout(nrow=3) 
+#+ plot_annotation(title = 'Relationships between age and metabolite concentrations in ACC')
+acc_fig_v
+ggsave("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/manuscript/figures/acc_naa_cho_ins_age_fig_oct2022_vertical.png", acc_fig_v, width = 1000, height = 3000, units = "px")
+
+#Create figure including all 5 metabolites
+acc_fig_all<-acc_naa + acc_cho + acc_cr + acc_glx + acc_ins + guide_area() + plot_layout(nrow=3, guides = 'collect') + plot_annotation(tag_levels = 'A')
+acc_fig_all
+ggsave("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/manuscript/figures/acc_all_fig_annot_oct2022_vertical.png", acc_fig_all, width = 2000, height = 3000, units = "px")
 ```
 
 
@@ -664,7 +734,7 @@ fdr_table_lag_new<-data.frame(model_names, p_lag)
 fdr_table_lag_new$p_fdr<-p.adjust(p_lag, method = "fdr", n=length(p_lag))
 colnames(fdr_table_lag_new)<- c("Metabolite", "p, unc.", "p, FDR")
 
-write.csv(fdr_table_lag_new, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/fdr_table_lag_oct2022.csv")
+write.csv(fdr_table_lag_new, "/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/fdr_table_lag_oct2022.csv")
 ```
 
 ##Plot results LAG
@@ -696,7 +766,7 @@ lag_naa<-ggplot(lag_dat_plot, aes(x=mri_age_y, y=lag_naa_partial, na.exclude = T
   theme_classic(base_size = 14) +
   theme(legend.position='none')
 lag_naa
-ggsave(plot=lag_naa,"/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_naa_age_tf_oct2022.png")
+ggsave(plot=lag_naa,"/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_naa_age_tf_oct2022.png")
 
 
 #LAG - Cre
@@ -721,9 +791,9 @@ lag_cre<-ggplot(lag_dat_plot_Cre, aes(x=mri_age_y, y=lag_cre_partial, na.exclude
   scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
   scale_y_continuous(limits=c(4,11), breaks=seq(4,11,1)) +
   theme_classic(base_size=14) +
-  theme(legend.position = c(.9,.95), legend.title = element_blank(),legend.background = element_blank(), legend.box.background = element_rect(colour = "black"), legend.text = element_text(size=8), legend.key.height = unit(.3, 'cm'), legend.key.width=unit(.3, 'cm'), legend.spacing.y = unit(0, "pt"))
+  theme(legend.position = c(.9,.98), legend.title = element_blank(),legend.background = element_blank(), legend.box.background = element_rect(colour = "black"), legend.text = element_text(size=8), legend.key.height = unit(.3, 'cm'), legend.key.width=unit(.3, 'cm'), legend.spacing.y = unit(0, "pt"))
 lag_cre
-ggsave(plot=lag_cre,"/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cre_age_tf_oct2022.png")
+ggsave(plot=lag_cre,"/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cre_age_tf_oct2022.png")
 
 
 
@@ -750,12 +820,12 @@ lag_cho<-ggplot(lag_dat_plot_cho, aes(x=mri_age_y, y=lag_cho_partial, na.exclude
   theme_classic(base_size=14) +
   theme(legend.position = 'none')
 lag_cho
-ggsave(plot=lag_cho,"/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cho_age_tf_oct2022.png")
+ggsave(plot=lag_cho,"/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cho_age_tf_oct2022.png")
 
 library(patchwork)
 lag_fig<-lag_naa + lag_cho + lag_cre + plot_layout(nrow=1) 
 lag_fig
-ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/manuscript/figures/lag_fig_oct2022.png", lag_fig, width = 3000, height = 1500, units = "px")
+ggsave("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/manuscript/figures/lag_fig_oct2022_horiz.png", lag_fig, width = 3000, height = 1025, units = "px")
 
 
 fixef.lag_ins_age_TisFrac<-fixef(lag_ins_age_TisFrac)
@@ -782,7 +852,7 @@ lag_ins
 Exploratory analysis to characterize change within subjects
 ```{r}
 #read data
-lag_dat<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n318_Oct2022.csv")
+lag_dat<-read.csv("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n318_Oct2022.csv")
 
 #list all subjects with >2 time points
 lag_subs_long<-group_by(lag_dat, subj_id) %>%
@@ -799,7 +869,7 @@ lag_dat_long <- lag_dat %>%
 lag_dat_long$mri_age_y2<- (lag_dat_long$mri_age_y)^2
 
 #save longtidudinal data set
-write.csv(lag_dat_long, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_3plus_visits_Oct2022.csv")
+write.csv(lag_dat_long, "/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_3plus_visits_Oct2022.csv")
 
 #longitudinal dataset descriptives
 lag_long_sex <- lag_dat_long %>%
@@ -813,7 +883,7 @@ lag_long_desc<-lag_dat_long %>%
   describe() %>%
   select(c("n", "mean", "sd", "min", "max"))
 lag_long_desc<-filter(lag_long_desc, row.names(lag_long_desc) %in% c("mri_age_y", "NAA_conc_molal", "Cho_GPC_PCh_conc_molal", "Cre_PCr_conc_molal", "Glu_Gln_conc_molal", "Ins_conc_molal", "TissueFraction_GMWM"))
-write.csv(lag_long_desc,"/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_long_metab_means_oct2022.csv")
+write.csv(lag_long_desc,"/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_long_metab_means_oct2022.csv")
 
 #NAA
 #fit age + tissue fraction model in longitudinal subset
@@ -856,6 +926,7 @@ summary(lag_ins_TisFrac_age_long)
 
 lag_ins_TisFrac_age_long_quad <-lmer(Ins_conc_molal ~ mri_age_y + TissueFraction_GMWM + mri_age_y2 + (1 | subj_id), data=lag_dat_long, REML=FALSE)
 summary(lag_ins_TisFrac_age_long_quad)
+
 
 #compare model fit
 anova(lag_ins_TisFrac_age_long, lag_ins_TisFrac_age_long_quad) #including quadratic term did not improve fit
@@ -908,7 +979,7 @@ fdr_table_long_age<-data.frame(model_names, p_long_age)
 fdr_table_long_age$p_fdr<-p.adjust(p_long_age, method = "fdr", n=length(p_long_age))
 colnames(fdr_table_long_age)<- c("Metabolite", "p, unc.", "p, FDR")
 
-write.csv(fdr_table_long_age, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/fdr_table_long_age_oct2022.csv")
+write.csv(fdr_table_long_age, "/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/fdr_table_long_age_oct2022.csv")
 
 p_quad_age2<-models_quad %>%
   map(summary) %>%
@@ -922,7 +993,7 @@ fdr_table_quad_age2$p_fdr<-p.adjust(p_quad_age2, method = "fdr", n=length(p_quad
 colnames(fdr_table_quad_age2)<- c("Metabolite", "p, unc.", "p, FDR")
 fdr_table_quad_age2
 
-write.csv(fdr_table_quad_age2, "/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/fdr_table_quad_age_oct2022.csv")
+write.csv(fdr_table_quad_age2, "/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/fdr_table_quad_age_oct2022.csv")
 
 ```
 
@@ -948,7 +1019,7 @@ plot_lag_naa_tf_long<-ggplot(lag_dat_long_naa, aes(x=mri_age_y, y=lag_naa_age_lo
   theme_classic(base_size=14) +
   theme(legend.position = 'none') 
 plot_lag_naa_tf_long
-ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_naa_long_age_oct2022.png", plot=plot_lag_naa_tf_long)
+ggsave("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_naa_long_age_oct2022.png", plot=plot_lag_naa_tf_long)
 
 #Plot Cho quadratic 
 #subset dataframe with only subjects included in tCho analysis
@@ -969,7 +1040,7 @@ plot_lag_cho_tf_quad<-ggplot(lag_dat_long_cho, aes(x=mri_age_y, y=lag_cho_age_lo
   theme_classic(base_size=14) +
   theme(legend.position = 'none') 
 plot_lag_cho_tf_quad
-ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cho_long_quad_octt2022.png", plot=plot_lag_cho_tf_quad)
+ggsave("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cho_long_quad_octt2022.png", plot=plot_lag_cho_tf_quad)
 
 #find min value and age when it occurs
 #create formula for fit line
@@ -1009,7 +1080,7 @@ plot_lag_cre_tf_long<-ggplot(lag_dat_long_cre, aes(x=mri_age_y, y=lag_cre_age_lo
   theme_classic(base_size=14) +
   theme(legend.position = c(.9,.95), legend.title = element_blank(),legend.background = element_blank(), legend.box.background = element_rect(colour = "black"), legend.text = element_text(size=8), legend.key.height = unit(.3, 'cm'), legend.key.width=unit(.3, 'cm'), legend.spacing.y = unit(0, "pt"))
 plot_lag_cre_tf_long
-ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cre_long_oct2022.png", plot=plot_lag_cre_tf_long)
+ggsave("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cre_long_oct2022.png", plot=plot_lag_cre_tf_long)
 
 #Plot Glx quadratic
 #subset dataframe with only subjects included in Glx analysis
@@ -1030,7 +1101,7 @@ plot_lag_glx_tf_quad<-ggplot(lag_dat_long_glx, aes(x=mri_age_y, y=lag_glx_age_lo
   theme_classic(base_size=14)+
   theme(legend.position= 'none')
 plot_lag_glx_tf_quad
-ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_glx_long_quad_octt2022.png", plot=plot_lag_glx_tf_quad)
+ggsave("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_glx_long_quad_octt2022.png", plot=plot_lag_glx_tf_quad)
 
 #find max value and age when it occurs
 #create formula for fit line
@@ -1054,7 +1125,7 @@ lag_dat_long_glx$mri_age_y[which.max(lag_dat_long_glx$predict)]
 library(patchwork)
 lag_long_fig<-plot_lag_naa_tf_long + plot_lag_cre_tf_long + plot_lag_cho_tf_quad + plot_lag_glx_tf_quad + plot_layout(nrow=2)
 lag_long_fig
-ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/manuscript/figures/results_lag_long_n51_oct2022.png", lag_long_fig, width = 2000, height = 2000, units = "px")
+ggsave("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/manuscript/figures/results_lag_long_n51_oct2022.png", lag_long_fig, width = 2000, height = 2000, units = "px")
 
 #Glx has 1 high value, maybe outlier - let's check
 #ggplot(lag_dat_long, aes(Glu_Gln_conc_molal)) + geom_boxplot()
@@ -1101,24 +1172,24 @@ acg_ann_pct<-lapply(acg_models, ann_pct, a=2, b=8)
 
 acg_pct.df<-data.frame(acg_model_names, unlist(acg_tot_pct), unlist(acg_ann_pct))
 
-write.csv(acg_pct.df,"/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_pct_chg_oct2022.csv", row.names=FALSE)
+write.csv(acg_pct.df,"/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/acg_pct_chg_oct2022.csv", row.names=FALSE)
 
 #run percent change functions on lag models, spanning ages 2-12 and write to dataframe
 lag_models<-c(lag_naa_age_TisFrac, lag_cho_age_TisFrac, lag_cre_age_TisFrac, lag_glx_age_TisFrac, lag_ins_age_TisFrac)
 lag_model_names<-c("NAA","Cho", "Cre", "Glx", "Ins")
-lag_tot_pct<-lapply(lag_models, tot_pct, a=2, b=12)
-lag_ann_pct<-lapply(lag_models, ann_pct, a=2, b=12)
+lag_tot_pct<-lapply(lag_models, tot_pct, a=2, b=11)
+lag_ann_pct<-lapply(lag_models, ann_pct, a=2, b=11)
 
 lag_pct.df<-data.frame(lag_model_names, unlist(lag_tot_pct), unlist(lag_ann_pct))
 
-write.csv(lag_pct.df,"/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_pct_chg_oct2022.csv", row.names=FALSE)
+write.csv(lag_pct.df,"/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_pct_chg_oct2022.csv", row.names=FALSE)
 
 ```
 
 ## Supplementary analyses
 # Check correlation between age and QC metrics
 ```{r}
-acg_dat<- read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n112_Oct2022.csv")
+acg_dat<- read.csv("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n112_Oct2022.csv")
 
 acg_age_snr<- lmer(SNR_NAA_LCM ~ mri_age_y + (1 | subj_id), data=acg_dat, REML=FALSE)
 summary(acg_age_snr) #  p=.559
@@ -1126,7 +1197,7 @@ summary(acg_age_snr) #  p=.559
 acg_age_lw<-lmer(NAA_LW_LCM ~ mri_age_y + (1 | subj_id), data=acg_dat, REML=FALSE)
 summary(acg_age_lw) # p=.433
 
-lag_dat<-read.csv("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n318_Oct2022.csv")
+lag_dat<-read.csv("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n318_Oct2022.csv")
 
 
 lag_age_snr<- lmer(SNR_NAA_LCM ~ mri_age_y + (1 | subj_id), data=lag_dat, REML=FALSE)
@@ -1140,7 +1211,7 @@ plot_lag_snr<-ggplot(lag_dat, aes(x=mri_age_y, y=SNR_NAA_LCM, na.exclude = TRUE)
   geom_point() +
   geom_smooth(method = "lm", se = FALSE, colour = "black", size=1) + 
   theme_classic()
-ggsave("/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/LTP_Age_SNR.png", plot_lag_snr)
+ggsave("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/LTP_Age_SNR.png", plot_lag_snr)
 
 lag_age_lw<-lmer(NAA_LW_LCM ~ mri_age_y + (1 | subj_id), data=lag_dat, REML=FALSE)
 summary(lag_age_lw) # p=.15
@@ -1226,7 +1297,7 @@ lag_naa_long_slides<- plot_lag_naa_tf_long +
 naa_fig<-acc_naa_slides + lag_naa_slides + lag_naa_long_slides + 
   plot_layout(widths = c(.75, 1,1), guides = "collect") & theme(legend.position = "right", plot.background = element_rect(fill='transparent', color=NA), text=element_text(color="lightgrey"), axis.text=element_text(color="lightgrey"), axis.line=element_line(color="lightgrey"), axis.ticks=element_line(color="lightgrey"))
 naa_fig
-ggsave('/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/naa_fig_4slides_light.png', naa_fig, width = 3000, height = 1500, units = "px", bg='transparent')
+ggsave('/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/naa_fig_4slides_light.png', naa_fig, width = 3000, height = 1500, units = "px", bg='transparent')
 
 
 #make plot backgrounds transparent
@@ -1264,7 +1335,7 @@ lag_cho_long_slides<- plot_lag_cho_tf_quad +
 cho_fig<-acc_cho_slides + lag_cho_slides + lag_cho_long_slides + 
   plot_layout(widths = c(.75, 1,1), guides = "collect") & theme(legend.position = "right", plot.background = element_rect(fill='transparent', color=NA), text=element_text(color="lightgrey"), axis.text=element_text(color="lightgrey"), axis.line=element_line(color="lightgrey"), axis.ticks=element_line(color="lightgrey"))
 cho_fig
-ggsave('/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/cho_fig_4slides_light.png', cho_fig, width = 3000, height = 1500, units = "px", bg='transparent')
+ggsave('/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/cho_fig_4slides_light.png', cho_fig, width = 3000, height = 1500, units = "px", bg='transparent')
 
 
 #make plot backgrounds transparent
@@ -1310,7 +1381,7 @@ lag_cre_long_slides
 cre_fig<-lag_cre_slides + lag_cre_long_slides + 
   plot_layout(guides = "collect") & theme(legend.position = "right", legend.background=element_rect(linetype="blank"),legend.title = element_text(), plot.background = element_rect(fill='transparent', color=NA), text=element_text(color="lightgrey"), axis.text=element_text(color="lightgrey"), axis.line=element_line(color="lightgrey"), axis.ticks=element_line(color="lightgrey"))
 cre_fig
-ggsave('/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/cre_fig_4slides_light.png', cre_fig, width = 2200, height = 1500, units = "px", bg='transparent')
+ggsave('/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/cre_fig_4slides_light.png', cre_fig, width = 2200, height = 1500, units = "px", bg='transparent')
 
 
 #make plot background transparent
@@ -1329,7 +1400,7 @@ lag_glx_long_slides<- plot_lag_glx_tf_quad +
   )
 lag_glx_long_slides
 
-ggsave('/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/glx_long_fig_4slides_light.png', lag_glx_long_slides, width = 1500, height = 1500, units = "px", bg='transparent')
+ggsave('/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/glx_long_fig_4slides_light.png', lag_glx_long_slides, width = 1500, height = 1500, units = "px", bg='transparent')
 
 #make plot background transparent
 acc_ins_slides<-ggplot(acg_dat, aes(x=mri_age_y, y=Ins_conc_molal,color=as.factor(female))) + 
@@ -1356,7 +1427,7 @@ acc_ins_slides<-ggplot(acg_dat, aes(x=mri_age_y, y=Ins_conc_molal,color=as.facto
     )
 acc_ins_slides
 
-ggsave('/Users/meaghan/OneDrive - University of Calgary/Preschool_data/MRS/results/ins_acc_fig_4slides_light.png', acc_ins_slides, width = 1500, height = 1500, units = "px", bg='transparent')
+ggsave('/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/ins_acc_fig_4slides_light.png', acc_ins_slides, width = 1500, height = 1500, units = "px", bg='transparent')
 
 
 ```
