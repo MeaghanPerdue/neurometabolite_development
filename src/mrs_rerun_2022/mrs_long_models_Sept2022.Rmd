@@ -163,7 +163,7 @@ lag_dat["241", "Cre_PCr_conc_molal"]<-NA  #replace outlier value with NA to excl
 plot_cho <- ggplot(lag_dat, aes(Cho_GPC_PCh_conc_molal))
 plot_cho + geom_density()
 plot_cho + geom_boxplot()
-rosnerTest(lag_dat$Cho_GPC_PCh_conc_molal, k = 6) #outlier value 3.37 obs. 170 (10090_PS15_015), coreg and spectrum look fine, keeping
+rosnerTest(lag_dat$Cho_GPC_PCh_conc_molal, k = 6) #outlier value 3.37 obs. 170 (10090_PS15_015), coreg and spectrum look fine, CRLB low, keeping
 
 plot_ins <- ggplot(lag_dat, aes(Ins_conc_molal))
 plot_ins + geom_density()
@@ -232,7 +232,7 @@ lag_desc<-lag_dat %>%
 lag_metab_desc<-filter(lag_desc, row.names(lag_desc) %in% c("NAA_conc_molal", "Cho_GPC_PCh_conc_molal", "Cre_PCr_conc_molal", "Glu_Gln_conc_molal", "Ins_conc_molal", "TissueFraction_GMWM"))
 
 #write to csv
-write.csv(lag_metab_desc, "/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_metab_descriptives_n318_Oct2022.csv")
+write.csv(lag_metab_desc, "/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_metab_descriptives_n318_Feb2023.csv")
 
 #convert subj_id variable to "character" type 
 acg_dat$subj_id <- as.character(acg_dat$subj_id)
@@ -556,7 +556,7 @@ ggsave("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS
 
 ```
 
-Join ACC plots into figure
+## Join ACC plots into figure
 ```{r}
 # Join ACC plots in a single figure (NAA and Cho only)
 library(patchwork)
@@ -774,7 +774,7 @@ lag_naa_partial <- remef(lag_naa_age_TisFrac, fix = "TissueFraction_GMWM") #does
 lag_naa<-ggplot(lag_dat_plot, aes(x=mri_age_y, y=lag_naa_partial, na.exclude = TRUE, color=as.factor(female))) +
   geom_point(size=1) +
   geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_naa_partial, group=as.factor(subj_id)), size = .5, show.legend = FALSE) +
-  labs(x = "Age (years)", y = "tNAA (corrected for tissue fraction)") +
+  labs(x = "Age (years)", y = "tNAA (residual)") +
   scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
   geom_abline(aes(intercept = fixef.lag_naa_TisFrac[[1]], slope = fixef.lag_naa_TisFrac[[2]]), size=1) + 
   scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
@@ -801,13 +801,13 @@ lag_cre_partial <- remef(lag_cre_age_TisFrac, fix = "TissueFraction_GMWM") #does
 lag_cre<-ggplot(lag_dat_plot_Cre, aes(x=mri_age_y, y=lag_cre_partial, na.exclude = TRUE, color=as.factor(female))) +
   geom_point(size=1) +
   geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_cre_partial, group=as.factor(subj_id)), size = .5, show.legend = FALSE) +
-  labs(x = "Age (years)", y = "tCr (corrected for tissue fraction)") +
+  labs(x = "Age (years)", y = "tCr (residual)") +
   scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
   geom_abline(aes(intercept = fixef.lag_cre_age_TisFrac[[1]], slope = fixef.lag_cre_age_TisFrac[[2]]), size=1) + 
   scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
   scale_y_continuous(limits=c(4,11), breaks=seq(4,11,1)) +
   theme_classic(base_size=14) +
-  theme(legend.position = c(.9,.98), legend.title = element_blank(),legend.background = element_blank(), legend.box.background = element_rect(colour = "black"), legend.text = element_text(size=8), legend.key.height = unit(.3, 'cm'), legend.key.width=unit(.3, 'cm'), legend.spacing.y = unit(0, "pt"))
+  theme(legend.position = c(.9,.98), legend.title = element_blank(),legend.background = element_blank(), legend.box.background = element_rect(colour = "black"), legend.text = element_text(size=14), legend.key.height = unit(.3, 'cm'), legend.key.width=unit(.3, 'cm'), legend.spacing.y = unit(0, "pt"))
 lag_cre
 ggsave(plot=lag_cre,"/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cre_age_tf_feb2023.png")
 
@@ -828,11 +828,11 @@ lag_cho_partial <- remef(lag_cho_age_TisFrac, fix = "TissueFraction_GMWM") #does
 lag_cho<-ggplot(lag_dat_plot_cho, aes(x=mri_age_y, y=lag_cho_partial, na.exclude = TRUE, color=as.factor(female))) +
   geom_point(size=1) +
   geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_cho_partial, group=as.factor(subj_id)), size = .5, show.legend = FALSE) +
-  labs(x = "Age (years)", y = "tCho (corrected for tissue fraction)") +
+  labs(x = "Age (years)", y = "tCho (residual)") +
   scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
   geom_abline(aes(intercept = fixef.lag_cho_age_TisFrac[[1]], slope = fixef.lag_cho_age_TisFrac[[2]]), size=1) + 
   scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
-  scale_y_continuous(limits=c(1,4), breaks=seq(1,4,1)) +
+  scale_y_continuous(limits=c(1.5,4.5), breaks=seq(1,5,1)) +
   theme_classic(base_size=14) +
   theme(legend.position = 'none')
 lag_cho
@@ -857,10 +857,10 @@ lag_glx_partial <- remef(lag_glx_age_TisFrac, fix = "TissueFraction_GMWM") #does
 lag_glx<-ggplot(lag_dat_plot_glx, aes(x=mri_age_y, y=lag_glx_partial, na.exclude = TRUE, color=as.factor(female))) +
   geom_point(size=1) +
   geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_glx_partial, group=as.factor(subj_id)), size = .5, show.legend = FALSE) +
-  labs(x = "Age (years)", y = "Glx (corrected for tissue fraction)") +
+  labs(x = "Age (years)", y = "Glx (residual)") +
   scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
   scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
-  scale_y_continuous(limits=c(6,19), breaks=seq(6,19,1)) +
+  scale_y_continuous(limits=c(6,19), breaks=seq(7,19,2)) +
   theme_classic(base_size=14) +
   theme(legend.position = 'none')
 lag_glx
@@ -879,17 +879,17 @@ lag_dat_plot_ins<- lag_dat %>%
 lag_ins_partial <- remef(lag_ins_age_TisFrac, fix = "TissueFraction_GMWM") #does NOT remove random effects variance
 
 
-lag_ins<-ggplot(lag_dat_plot_glx, aes(x=mri_age_y, y=lag_ins_partial, na.exclude = TRUE, color=as.factor(female))) +
+lag_ins<-ggplot(lag_dat_plot_ins, aes(x=mri_age_y, y=lag_ins_partial, na.exclude = TRUE, color=as.factor(female))) +
   geom_point(size=1) +
   geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_ins_partial, group=as.factor(subj_id)), size = .5, show.legend = FALSE) +
-  labs(x = "Age (years)", y = "mI (corrected for tissue fraction)") +
+  labs(x = "Age (years)", y = "mI (residual)") +
   scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
   scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
   scale_y_continuous(limits=c(0,12), breaks=seq(0,12,1)) +
   theme_classic(base_size=14) +
   theme(legend.position = 'none')
 lag_ins
-ggsave(plot=lag_ins,"/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cho_age_tf_feb2023.png")
+ggsave(plot=lag_ins,"/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_ins_age_tf_feb2023.png")
 
 ```
 
@@ -902,31 +902,23 @@ lag_fig
 ggsave("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/manuscript/figures/lag_fig_oct2022_horiz.png", lag_fig, width = 3000, height = 1025, units = "px")
 
 
-fixef.lag_ins_age_TisFrac<-fixef(lag_ins_age_TisFrac)
-lag_ins_partial <- remef(lag_ins_age_TisFrac, fix = "TissueFraction_GMWM") #does NOT remove random effects variance
-lag_dat_plot_ins<- lag_dat %>% 
-  filter(! is.na(Ins_conc_molal))
+#version including all plots per reviewer request
+lag_fig_all<-lag_naa + lag_cho + lag_cre + lag_glx + lag_ins + guide_area() + plot_layout(nrow=3, guides = 'collect') + plot_annotation(tag_levels = 'A')
+lag_fig_all
+ggsave("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/manuscript/figures/ltp_all_fig_annot_feb2023_vertical.png", lag_fig_all, width = 2000, height = 3000, units = "px")
 
-#plotting Ins just to see the data spread
-lag_ins<-ggplot(lag_dat_plot_ins, aes(x=mri_age_y, y=lag_ins_partial, na.exclude = TRUE, color=as.factor(female))) +
-  geom_point(size=1) +
-  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_ins_partial, group=as.factor(subj_id)), size = .5, show.legend = FALSE) +
-  labs(x = "Age (years)", y = "mI (corrected for tissue fraction)") +
-  scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
-  geom_abline(aes(intercept = fixef.lag_ins_age_TisFrac[[1]], slope = fixef.lag_ins_age_TisFrac[[2]]), size=1) + 
-  theme_classic(base_size=14) 
-lag_ins
 
 
 ```
 
 
 
-##Test quadratic effects in LAG subjects with >2 time points 
+# Test quadratic effects in LAG subjects with >2 time points 
 Exploratory analysis to characterize change within subjects
+
+## Pull longitudinal data
+Get descriptive stats
 ```{r}
-#read data
-lag_dat<-read.csv("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n318_Oct2022.csv")
 
 #list all subjects with >2 time points
 lag_subs_long<-group_by(lag_dat, subj_id) %>%
@@ -943,7 +935,7 @@ lag_dat_long <- lag_dat %>%
 lag_dat_long$mri_age_y2<- (lag_dat_long$mri_age_y)^2
 
 #save longtidudinal data set
-write.csv(lag_dat_long, "/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_3plus_visits_Oct2022.csv")
+write.csv(lag_dat_long, "/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_3plus_visits_Feb2023.csv")
 
 #longitudinal dataset descriptives
 lag_long_sex <- lag_dat_long %>%
@@ -957,8 +949,11 @@ lag_long_desc<-lag_dat_long %>%
   describe() %>%
   select(c("n", "mean", "sd", "min", "max"))
 lag_long_desc<-filter(lag_long_desc, row.names(lag_long_desc) %in% c("mri_age_y", "NAA_conc_molal", "Cho_GPC_PCh_conc_molal", "Cre_PCr_conc_molal", "Glu_Gln_conc_molal", "Ins_conc_molal", "TissueFraction_GMWM"))
-write.csv(lag_long_desc,"/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_long_metab_means_oct2022.csv")
+write.csv(lag_long_desc,"/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_long_metab_means_feb2023.csv")
+```
 
+## Run longitudinal models
+```{r}
 #NAA
 #fit age + tissue fraction model in longitudinal subset
 lag_naa_TisFrac_age_long <-lmer(NAA_conc_molal ~ mri_age_y + TissueFraction_GMWM + (1 | subj_id), data=lag_dat_long, REML=FALSE)
@@ -1028,7 +1023,9 @@ library(sjPlot)
 lag_long_summary_table_all<-tab_model(lag_naa_TisFrac_age_long, lag_cre_TisFrac_age_long, lag_cho_TisFrac_age_long_quad, lag_glx_TisFrac_age_long_quad, lag_ins_TisFrac_age_long, show.std = TRUE, show.re.var=FALSE, show.icc = FALSE, show.r2=FALSE)
 lag_long_summary_table_all #opens in Rstudio viewer, can open from there to web browser and save as PDF or whatever
 
-
+```
+## FDR Correction for longitudinal models
+```{r}
 #FDR correction
 #list models
 models_long<- c(lag_naa_TisFrac_age_long, lag_cre_TisFrac_age_long, lag_ins_TisFrac_age_long)
@@ -1045,29 +1042,21 @@ p_quad_age<-models_quad %>%
   map(coef) %>%
   map_dbl(18) 
 
-p_long_age<-c(p_long, p_quad_age)
-
-model_names<-c("NAA", "Cre", "Ins","Cho", "Glx")
-fdr_table_long_age<-data.frame(model_names, p_long_age)
-
-fdr_table_long_age$p_fdr<-p.adjust(p_long_age, method = "fdr", n=length(p_long_age))
-colnames(fdr_table_long_age)<- c("Metabolite", "p, unc.", "p, FDR")
-
-write.csv(fdr_table_long_age, "/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/fdr_table_long_age_oct2022.csv")
-
 p_quad_age2<-models_quad %>%
   map(summary) %>%
   map(coef) %>%
   map_dbl(20) 
 
-model_names<-c("Cho", "Glx")
-fdr_table_quad_age2<-data.frame(model_names, p_quad_age2)
+p_long_age<-c(p_long, p_quad_age, p_quad_age2)
 
-fdr_table_quad_age2$p_fdr<-p.adjust(p_quad_age2, method = "fdr", n=length(p_quad_age2))
-colnames(fdr_table_quad_age2)<- c("Metabolite", "p, unc.", "p, FDR")
-fdr_table_quad_age2
+model_names<-c("NAA", "Cre", "Ins","Cho", "Glx", "Cho_quad", "Glx_quad")
+fdr_table_long_age<-data.frame(model_names, p_long_age)
 
-write.csv(fdr_table_quad_age2, "/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/fdr_table_quad_age_oct2022.csv")
+fdr_table_long_age$p_fdr<-p.adjust(p_long_age, method = "fdr", n=length(p_long_age))
+colnames(fdr_table_long_age)<- c("Metabolite", "p, unc.", "p, FDR")
+
+write.csv(fdr_table_long_age, "/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/fdr_table_long_age_feb2023.csv")
+
 
 ```
 
@@ -1085,7 +1074,7 @@ lag_naa_age_long_partial <- remef(lag_naa_TisFrac_age_long, fix = "TissueFractio
 plot_lag_naa_tf_long<-ggplot(lag_dat_long_naa, aes(x=mri_age_y, y=lag_naa_age_long_partial, na.exclude = TRUE)) +
   geom_point(aes(color=as.factor(female)), size=1) +
   geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_naa_age_long_partial, group=as.factor(subj_id), color=as.factor(female)), size = .5, show.legend = FALSE) +
-  labs(x = "Age (years)", y = "tNAA (controlling for tissue fraction)") +
+  labs(x = "Age (years)", y = "tNAA (residual)") +
   scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
   geom_smooth(method = "lm", se = FALSE, colour = "black", size=1) + 
   scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
@@ -1093,7 +1082,7 @@ plot_lag_naa_tf_long<-ggplot(lag_dat_long_naa, aes(x=mri_age_y, y=lag_naa_age_lo
   theme_classic(base_size=14) +
   theme(legend.position = 'none') 
 plot_lag_naa_tf_long
-ggsave("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_naa_long_age_oct2022.png", plot=plot_lag_naa_tf_long)
+ggsave("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_naa_long_age_feb2023.png", plot=plot_lag_naa_tf_long)
 
 #Plot Cho quadratic 
 #subset dataframe with only subjects included in tCho analysis
@@ -1106,15 +1095,15 @@ lag_cho_age_long_partial <- remef(lag_cho_TisFrac_age_long_quad, fix = "TissueFr
 plot_lag_cho_tf_quad<-ggplot(lag_dat_long_cho, aes(x=mri_age_y, y=lag_cho_age_long_partial, na.exclude = TRUE)) +
   geom_point(aes(color=as.factor(female)), size=1) +
   geom_smooth(method = "lm", se = FALSE, formula = y ~ poly(x,2), aes(x=mri_age_y, y=lag_cho_age_long_partial, group=as.factor(subj_id), color=as.factor(female)), size = .5, show.legend = FALSE) +
-  labs(x = "Age (years)", y = "tCho (controlling for tissue fraction)") +
+  labs(x = "Age (years)", y = "tCho (residual)") +
   scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
-  geom_smooth(method = "lm", formula = y ~ poly(x,2), se = FALSE, colour = "black", size=1) + 
+  geom_smooth(method = "lm", formula = y ~ poly(x,2), se = FALSE, colour = "black", size=1) +
   scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
   scale_y_continuous(limits=c(1,4), breaks=seq(1,4,1)) +
   theme_classic(base_size=14) +
   theme(legend.position = 'none') 
 plot_lag_cho_tf_quad
-ggsave("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cho_long_quad_octt2022.png", plot=plot_lag_cho_tf_quad)
+ggsave("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cho_long_quad_feb2023.png", plot=plot_lag_cho_tf_quad)
 
 #find min value and age when it occurs
 #create formula for fit line
@@ -1146,15 +1135,15 @@ lag_cre_age_long_partial <- remef(lag_cre_TisFrac_age_long, fix = "TissueFractio
 plot_lag_cre_tf_long<-ggplot(lag_dat_long_cre, aes(x=mri_age_y, y=lag_cre_age_long_partial, na.exclude = TRUE)) +
   geom_point(aes(color=as.factor(female)),size=1) +
   geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_cre_age_long_partial, group=as.factor(subj_id), color=as.factor(female)), size = .5, show.legend = FALSE) +
-  labs(x = "Age (years)", y = "tCr (controlling for tissue fraction)") +
+  labs(x = "Age (years)", y = "tCr (residual)") +
   scale_color_viridis(name="Sex",labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
   geom_smooth(method = "lm", se = FALSE, colour = "black", size=1) + 
   scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
   scale_y_continuous(limits=c(3,11), breaks=seq(3,11,1)) +
   theme_classic(base_size=14) +
-  theme(legend.position = c(.9,.95), legend.title = element_blank(),legend.background = element_blank(), legend.box.background = element_rect(colour = "black"), legend.text = element_text(size=8), legend.key.height = unit(.3, 'cm'), legend.key.width=unit(.3, 'cm'), legend.spacing.y = unit(0, "pt"))
+  theme(legend.position = c(.9,.95), legend.title = element_blank(),legend.background = element_blank(), legend.box.background = element_rect(colour = "black"), legend.text = element_text(size=14), legend.key.height = unit(.3, 'cm'), legend.key.width=unit(.3, 'cm'), legend.spacing.y = unit(0, "pt"))
 plot_lag_cre_tf_long
-ggsave("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cre_long_oct2022.png", plot=plot_lag_cre_tf_long)
+ggsave("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cre_long_feb2023.png", plot=plot_lag_cre_tf_long)
 
 #Plot Glx quadratic
 #subset dataframe with only subjects included in Glx analysis
@@ -1167,15 +1156,15 @@ lag_glx_age_long_partial <- remef(lag_glx_TisFrac_age_long_quad, fix = "TissueFr
 plot_lag_glx_tf_quad<-ggplot(lag_dat_long_glx, aes(x=mri_age_y, y=lag_glx_age_long_partial, na.exclude = TRUE)) +
   geom_point(aes(color=as.factor(female)), size=1) +
   geom_smooth(method = "lm", se = FALSE, formula = y ~ poly(x,2), aes(x=mri_age_y, y=lag_glx_age_long_partial, group=as.factor(subj_id), color=as.factor(female)), size = .5, show.legend = FALSE) +
-  labs(x = "Age (years)", y = "Glx (controlling for tissue fraction)") +
+  labs(x = "Age (years)", y = "Glx (residual)") +
   scale_color_viridis(name = "Sex", labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
   geom_smooth(method = "lm", formula = y ~ poly(x,2), se = FALSE, colour = "black", size=1) + 
   scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
-  scale_y_continuous(limits=c(7,18), breaks=seq(7,18,1)) +
+  scale_y_continuous(limits=c(7,17), breaks=seq(7,17,1)) +
   theme_classic(base_size=14)+
   theme(legend.position= 'none')
 plot_lag_glx_tf_quad
-ggsave("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_glx_long_quad_octt2022.png", plot=plot_lag_glx_tf_quad)
+ggsave("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_glx_long_quad_feb2023.png", plot=plot_lag_glx_tf_quad)
 
 #find max value and age when it occurs
 #create formula for fit line
@@ -1195,11 +1184,43 @@ plot_lag_glx_tf_quad +
 #occurs at age
 lag_dat_long_glx$mri_age_y[which.max(lag_dat_long_glx$predict)]
 
+#plot mI (non-significant)
+#subset dataframe with only subjects included in tCre analysis
+lag_dat_long_ins<- lag_dat_long %>% 
+  filter(! is.na(Ins_conc_molal))
+
+#calculate partial effect tissue fraction on tCre (remove effect of tissue fraction)
+lag_ins_age_long_partial <- remef(lag_ins_TisFrac_age_long, fix = "TissueFraction_GMWM") 
+
+plot_lag_ins_tf_long<-ggplot(lag_dat_long_ins, aes(x=mri_age_y, y=lag_ins_age_long_partial, na.exclude = TRUE)) +
+  geom_point(aes(color=as.factor(female)),size=1) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_ins_age_long_partial, group=as.factor(subj_id), color=as.factor(female)), size = .5, show.legend = FALSE) +
+  labs(x = "Age (years)", y = "mI (residual)") +
+  scale_color_viridis(name="Sex",labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  geom_smooth(method = "lm", se = FALSE, colour = "black", size=1) + 
+  scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
+  scale_y_continuous(limits=c(1,12), breaks=seq(1,12,1)) +
+  theme_classic(base_size=14) +
+  theme(legend.position = 'none')
+plot_lag_cre_tf_long
+ggsave("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/lag_cre_long_feb2023.png", plot=plot_lag_cre_tf_long)
+
+```
+
+## Join longitudinal plots into figure
+```{r}
 #gather plots in a single figure
 library(patchwork)
 lag_long_fig<-plot_lag_naa_tf_long + plot_lag_cre_tf_long + plot_lag_cho_tf_quad + plot_lag_glx_tf_quad + plot_layout(nrow=2)
 lag_long_fig
 ggsave("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/manuscript/figures/results_lag_long_n51_oct2022.png", lag_long_fig, width = 2000, height = 2000, units = "px")
+
+#version including all plots per reviewer request
+lag_long_fig_all<-plot_lag_naa_tf_long + plot_lag_cre_tf_long + plot_lag_cho_tf_quad + plot_lag_glx_tf_quad + plot_lag_ins_tf_long + guide_area() + plot_layout(nrow=3, guides = 'collect') + plot_annotation(tag_levels = 'A')
+lag_long_fig_all
+ggsave("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/manuscript/figures/ltp_long_all_fig_annot_feb2023_vertical.png", lag_long_fig_all, width = 2000, height = 3000, units = "px")
+
+
 
 #Glx has 1 high value, maybe outlier - let's check
 #ggplot(lag_dat_long, aes(Glu_Gln_conc_molal)) + geom_boxplot()
