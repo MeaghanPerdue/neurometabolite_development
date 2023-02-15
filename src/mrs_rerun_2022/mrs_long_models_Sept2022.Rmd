@@ -419,7 +419,7 @@ library(sjPlot) #for pretty summary tables
 library(report) #for text summaries
 
 #create html summary table for all models ACG
-acg_summary_table_all<-tab_model(acg_naa_age, acg_cre_age, acg_cho_age, acg_ins_age, acg_glx_age, show.std = TRUE, show.re.var=FALSE, show.icc = FALSE, show.r2=FALSE, dv.labels = c("tNAA (molal)", "tCr (molal)", "tCho (molal)", "Ins (molal)", "Glx (molal)"), pred.labels = c("(Intercept)", "Age (years)"))
+acg_summary_table_all<-tab_model(acg_naa_age, acg_cho_age, acg_cre_age, acg_glx_age, acg_ins_age, show.std = TRUE, show.re.var=FALSE, show.icc = FALSE, show.r2=FALSE, dv.labels = c("tNAA (molal)", "tCho (molal)", "tCr (molal)", "Glx (molal)", "Ins (molal)"), pred.labels = c("(Intercept)", "Age (years)"))
 acg_summary_table_all #opens in Rstudio viewer, can open from there to web browser and save as PDF or whatever
 
 #check bootstrap CIs
@@ -722,7 +722,7 @@ library(sjPlot) #for pretty summary tables
 library(report) #for text summaries
 
 #create html summary table for all models LAG
-lag_summary_table_all<-tab_model(lag_naa_age_TisFrac, lag_cre_age_TisFrac, lag_cho_age_TisFrac, lag_ins_age_TisFrac, lag_glx_age_TisFrac, show.std = TRUE, show.re.var=FALSE, show.icc = FALSE, show.r2=FALSE, dv.labels = c("tNAA (molal)", "tCr (molal)", "tCho (molal)", "Ins (molal)", "Glx (molal)"), pred.labels = c("(Intercept)", "Age (years)", "Tissue Fraction GM/(WM+GM)"))
+lag_summary_table_all<-tab_model(lag_naa_age_TisFrac, lag_cho_age_TisFrac, lag_cre_age_TisFrac,  lag_glx_age_TisFrac, lag_ins_age_TisFrac, show.std = TRUE, show.re.var=FALSE, show.icc = FALSE, show.r2=FALSE, dv.labels = c("tNAA (molal)",  "tCho (molal)", "tCr (molal)", "Glx (molal)", "Ins (molal)"), pred.labels = c("(Intercept)", "Age (years)", "Tissue Fraction GM/(WM+GM)"))
 lag_summary_table_all
 
 report(lag_naa_age_TisFrac)
@@ -1020,8 +1020,11 @@ summary(lag_glx_TisFrac_age_long_quad_sex)
 #Print model summaries to table
 library(sjPlot)
 
-lag_long_summary_table_all<-tab_model(lag_naa_TisFrac_age_long, lag_cre_TisFrac_age_long, lag_cho_TisFrac_age_long_quad, lag_glx_TisFrac_age_long_quad, lag_ins_TisFrac_age_long, show.std = TRUE, show.re.var=FALSE, show.icc = FALSE, show.r2=FALSE)
+lag_long_summary_table_all<-tab_model(lag_naa_TisFrac_age_long,  lag_cho_TisFrac_age_long_quad, lag_cre_TisFrac_age_long, lag_glx_TisFrac_age_long_quad, lag_ins_TisFrac_age_long, show.std = TRUE, show.re.var=FALSE, show.icc = FALSE, show.r2=FALSE, dv.labels = c("tNAA (molal)",  "tCho (molal)", "tCr (molal)", "Glx (molal)", "mI (molal)"), pred.labels = c("(Intercept)", "Age (years)", "GM Tissue Fraction", "Age^2"))
 lag_long_summary_table_all #opens in Rstudio viewer, can open from there to web browser and save as PDF or whatever
+
+
+
 
 ```
 ## FDR Correction for longitudinal models
@@ -1197,7 +1200,6 @@ plot_lag_ins_tf_long<-ggplot(lag_dat_long_ins, aes(x=mri_age_y, y=lag_ins_age_lo
   geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=lag_ins_age_long_partial, group=as.factor(subj_id), color=as.factor(female)), size = .5, show.legend = FALSE) +
   labs(x = "Age (years)", y = "mI (residual)") +
   scale_color_viridis(name="Sex",labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
-  geom_smooth(method = "lm", se = FALSE, colour = "black", size=1) + 
   scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
   scale_y_continuous(limits=c(1,12), breaks=seq(1,12,1)) +
   theme_classic(base_size=14) +
@@ -1284,7 +1286,7 @@ write.csv(lag_pct.df,"/Users/meaghanperdue/OneDrive - University of Calgary/Pres
 ## Supplementary analyses
 # Check correlation between age and QC metrics
 ```{r}
-acg_dat<- read.csv("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n112_Oct2022.csv")
+acg_dat<- read.csv("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n112_Jan2023.csv")
 
 acg_age_snr<- lmer(SNR_NAA_LCM ~ mri_age_y + (1 | subj_id), data=acg_dat, REML=FALSE)
 summary(acg_age_snr) #  p=.559
@@ -1292,7 +1294,9 @@ summary(acg_age_snr) #  p=.559
 acg_age_lw<-lmer(NAA_LW_LCM ~ mri_age_y + (1 | subj_id), data=acg_dat, REML=FALSE)
 summary(acg_age_lw) # p=.433
 
-lag_dat<-read.csv("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n318_Oct2022.csv")
+
+
+lag_dat<-read.csv("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n318_Feb2023.csv")
 
 
 lag_age_snr<- lmer(SNR_NAA_LCM ~ mri_age_y + (1 | subj_id), data=lag_dat, REML=FALSE)
@@ -1303,17 +1307,33 @@ ggplot(lag_dat, aes(SNR_NAA_LCM)) +
 rosnerTest(lag_dat$SNR_NAA_LCM, k = 3) #no sig. outliers
 
 plot_lag_snr<-ggplot(lag_dat, aes(x=mri_age_y, y=SNR_NAA_LCM, na.exclude = TRUE)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE, colour = "black", size=1) + 
-  theme_classic()
-ggsave("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/LTP_Age_SNR.png", plot_lag_snr)
+  geom_point(aes(color=as.factor(female)),size=1) +
+  geom_smooth(method = "lm", se = FALSE, aes(x=mri_age_y, y=SNR_NAA_LCM, group=as.factor(subj_id), color=as.factor(female)), size = .5, show.legend = FALSE) +
+    geom_smooth(method = "lm", se = FALSE, colour = "black", size=1) + 
+  labs(x = "Age (years)", y = "SNR of NAA") +
+  scale_color_viridis(name="Sex",labels = c("Male", "Female"), discrete = TRUE, option = "H", begin = .2, end = .8) +
+  scale_x_continuous(limits=c(2,12), breaks=seq(2,12,1)) +
+  scale_y_continuous(limits=c(40,120), breaks=seq(40,120,10)) +
+  theme_classic(base_size=14) +
+  theme(legend.position = c(.9,.95), legend.title = element_blank(),legend.background = element_blank(), legend.box.background = element_rect(colour = "black"), legend.text = element_text(size=14), legend.key.height = unit(.3, 'cm'), legend.key.width=unit(.3, 'cm'), legend.spacing.y = unit(0, "pt"))
+  
+ggsave("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/results/LTP_Age_SNR.png", plot_lag_snr, width = 1600, height = 1600, units = "px")
+
+
+
 
 lag_age_lw<-lmer(NAA_LW_LCM ~ mri_age_y + (1 | subj_id), data=lag_dat, REML=FALSE)
 summary(lag_age_lw) # p=.15
 
+#create model summary tables for SI
+ACC_QCage_summary_table_all<-tab_model(acg_age_snr, acg_age_lw, show.std = TRUE, show.re.var=FALSE, show.icc = FALSE, show.r2=FALSE, dv.labels = c("ACC - SNR", "ACC - Linewidth"), pred.labels = c("(Intercept)", "Age (years)"))
+ACC_QCage_summary_table_all
+
+LTP_QCage_summary_table_all<-tab_model(lag_age_snr, lag_age_lw, show.std = TRUE, show.re.var=FALSE, show.icc = FALSE, show.r2=FALSE, dv.labels = c("LTP - SNR", "LTP - Linewidth"), pred.labels = c("(Intercept)", "Age (years)"))
+LTP_QCage_summary_table_all
 
 
-#add SNR to metabolite-age models to see if it influeces effects
+#add SNR to metabolite-age models to see if it influences effects
 lag_naa_age_TisFrac_snr<- lmer(NAA_conc_molal ~ mri_age_y + TissueFraction_GMWM + SNR_NAA_LCM + (1 | subj_id), data=lag_dat, REML=FALSE)
 summary(lag_naa_age_TisFrac_snr) #age effect still sig.
 
@@ -1327,7 +1347,7 @@ summary(lag_cho_age_TisFrac_snr) #age effect still sig, same beta
 anova(lag_cho_age_TisFrac, lag_cho_age_TisFrac_snr) #p=.054
 
 lag_cre_age_TisFrac_snr<- lmer(Cre_PCr_conc_molal ~ mri_age_y + TissueFraction_GMWM + SNR_NAA_LCM + (1 | subj_id), data=lag_dat, REML=FALSE)
-summary(lag_cre_age_TisFrac_snr) #age effect no longer sig.
+summary(lag_cre_age_TisFrac_snr) #age effect no longer sig. (p = .118)
 
 anova(lag_cre_age_TisFrac, lag_cre_age_TisFrac_snr) #model fit improved
 check_collinearity(lag_cre_age_TisFrac_snr)
@@ -1342,7 +1362,8 @@ summary(lag_ins_age_TisFrac_snr) #age effect still null
 
 anova(lag_ins_age_TisFrac, lag_ins_age_TisFrac_snr) #model fit not improved
 
-
+lag_QCmetab_summary_table_all<-tab_model(lag_naa_age_TisFrac_snr,  lag_cho_age_TisFrac_snr, lag_cre_age_TisFrac_snr, lag_glx_age_TisFrac_snr, lag_ins_age_TisFrac_snr, show.std = TRUE, show.re.var=FALSE, show.icc = FALSE, show.r2=FALSE, dv.labels = c("tNAA (molal)",  "tCho (molal)", "tCr (molal)", "Glx (molal)", "mI (molal)"), pred.labels = c("(Intercept)", "Age (years)", "GM Tissue Fraction", "SNR"))
+lag_QCmetab_summary_table_all #opens in Rstudio viewer, can open from there to web browser and save as PDF or whatever
 
 ```
 
@@ -1353,9 +1374,9 @@ anova(lag_ins_age_TisFrac, lag_ins_age_TisFrac_snr) #model fit not improved
 ```{r}
 library(patchwork)
 
-acg_dat<-read.csv("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n112_Oct2022.csv")
-lag_dat<-read.csv("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n318_Oct2022.csv")
-lag_dat_long<-read.csv("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_3plus_visits_Oct2022.csv")
+acg_dat<-read.csv("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/data/acg_data_molal_outliers_removed_n112_Jan2023.csv")
+lag_dat<-read.csv("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_molal_outliers_removed_n318_Feb2023.csv")
+lag_dat_long<-read.csv("/Users/meaghanperdue/OneDrive - University of Calgary/Preschool_data/MRS/data/lag_data_3plus_visits_Feb2023.csv")
 
 #make plot backgrounds transparent
 acc_naa_slides<-acc_naa + 
